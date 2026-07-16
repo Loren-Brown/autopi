@@ -15,7 +15,7 @@ src/
   main.py                 CLI dispatcher (--collector / --web / --obd / default SSM logger)
   ssm-collector/          SSM protocol, runtime, collector service, terminal logger
     configs/ssm_configs.json   Generated address map (gitignored; required at runtime)
-  autopi-app/             Dashboard UI (FastAPI + static/)
+  autopi-app/             UI: /dashboard = 2‑DIN glanceable Dash; /detailed = mobile secondary
   obd-collector/          Generic OBD-II terminal poller
 raspberryPiSetup/         One-shot Pi setup scripts (invoked by pi_setup.sh over SSH)
 dev_scripts/              Offline tools (RomRaider parse, Teensy header gen) — gitignored

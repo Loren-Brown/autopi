@@ -2,13 +2,39 @@
 
 Dashboard UI for live Subaru SSM telemetry. This process **does not talk to the ECU**. It serves the browser UI and AP helpers; the browser streams data from the separate SSM collector over WebSocket.
 
+## Views
+
+| Route | Name | Audience | Contents |
+|-------|------|----------|----------|
+| `/` | — | Path-based | Trusted/dev (USB, localhost) → `/dashboard`; guest AP → `/detailed` |
+| `/detailed` | **Detailed** | Secondary clients (guest AP / phone / tablet) | Live parameter table + history charts; **no** QR panel |
+| `/dashboard` | **Dash** / **Car** | Primary client (2‑DIN head unit) | Gauge cluster + motion status; guest Wi‑Fi QR when parked |
+
+Any client may open either view. Nav is for development and secondary devices; the in-car Dash is not driven by pointer or keyboard input.
+
+### Design intent
+
+**Dash (`/dashboard`) — car stereo**
+
+- Shown **full screen** on a **2‑DIN** head-unit display (fixed aspect ratio / resolution).
+- **No mouse, keyboard, or touch** in normal use — glanceable only.
+- Prioritize **large type**, **easy-to-read fonts**, and **high-contrast** colors so values are readable at a glance and in varying cabin light.
+- Layout should fit the screen without relying on scroll or fine interaction.
+- QR / Wi‑Fi share UI is for setup and the dev machine, not for the driver while driving. On Dash the header shows **moving** / **stopped** / **parked**; the QR panel appears only in the parked state (speed 0 for 10 seconds) and hides as soon as speed is above 0.
+
+**Detailed (`/detailed`) — mobile secondary**
+
+- Normal **phone / tablet** web UI: scrollable, tappable, standard mobile layout.
+- Default landing for guests on the AP; richer table + charts for inspection.
+- Interaction (scroll, tap, nav) is expected and fine.
+
 ## Role
 
 | Piece | Responsibility |
 |-------|----------------|
-| **This app** (`web_main.py`) | HTTP on port `8080` — static UI, config, guest Wi‑Fi QR |
+| **This app** (`web_main.py`) | HTTP on port `8080` — views, config, guest Wi‑Fi QR APIs |
 | **SSM collector** (`../ssm-collector/`) | CAN/SSM polling + WebSocket feed on port `8090` |
-| **Browser** | Renders gauges/charts; connects to the collector WS URL from `/config.json` |
+| **Browser** | Renders the selected view; connects to the collector WS URL from `/config.json` |
 
 Run via the repo entry point:
 
@@ -18,29 +44,44 @@ uv run src/main.py --web
 
 Defaults: `WEB_HOST=0.0.0.0`, `WEB_PORT=8080`, `COLLECTOR_WS_URL=ws://localhost:8090/ws`.
 
+### Live UI edits (no full restart)
+
+Static UI files are served with **no-cache** headers. After changing HTML/CSS/JS/configs:
+
+```bash
+./sync_ui.sh          # rsync only src/autopi-app → Pi
+# then Cmd+R / Ctrl+R in the browser
+```
+
+Or **Tasks: Run Task → “autopi: sync UI (no restart)”** (syncs + opens Dash with a cache-bust query).
+
+Only restart the web process when you change `web_main.py` (or other Python).
+
 ## Structure
 
 ```
 autopi-app/
-├── README.md          ← this file
-├── web_main.py        FastAPI + uvicorn server
-├── static/            Front-end assets (no build step)
-│   ├── index.html     Shell: header, gauge/chart mounts, guest Wi‑Fi panel
-│   ├── style.css      Layout and theme
-│   └── app.js         WebSocket client, Canvas gauges & history charts
-└── test/              Placeholder for app tests
+├── README.md
+├── web_main.py
+├── static/
+│   ├── detailed.html   Mobile Detailed view
+│   ├── dashboard.html  2‑DIN Dash / Car view
+│   ├── style.css
+│   └── app.js          Shared WebSocket client + Canvas charts (view via data-view)
+└── test/
 ```
 
 ### `web_main.py`
 
-- Serves `/` → `static/index.html` and mounts `/static`.
-- `/config.json` — tells the UI which collector WebSocket to use (`COLLECTOR_WS_URL`).
-- `/api/ap-info` and QR SVG routes — guest AP SSID/PSK and dashboard URL (from `/etc/autopi/ap.env` when present). Admin secrets are not exposed to guest clients.
-- Captive-portal probe paths — soft-redirect phones on guest Wi‑Fi to the dashboard instead of failing over to cellular.
+- `/` → `/dashboard` for trusted/dev clients (localhost, USB); `/detailed` for guest AP.
+- `/detailed`, `/dashboard` — view shells under `static/`.
+- `/config.json` — collector WebSocket URL (`COLLECTOR_WS_URL`).
+- `/api/ap-info` and QR SVG routes — guest AP metadata (QR UI is only on Dash).
+- Captive-portal probes soft-redirect to the Detailed URL.
 
 ### `static/`
 
-Vanilla HTML/CSS/JS (no frontend framework). `app.js` builds gauge and chart canvases from collector metadata, keeps ~90s of history, and updates connection/ECU/rate status in the header.
+Vanilla HTML/CSS/JS. `app.js` reads `body[data-view]` (`detailed` | `dashboard`) to choose layout and whether to load the AP share panel. Style and layout for Dash should follow the car-stereo constraints above; Detailed should stay a conventional mobile page.
 
 ## Related
 

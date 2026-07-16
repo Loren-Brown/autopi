@@ -1,0 +1,15 @@
+{
+  "historySeconds": 90,
+  "format": {
+    "multiplier": 3,
+    "C": 1,
+    "degrees": 1,
+    "default": 2
+  },
+  "channels": [
+    { "key": "coolant", "color": "#e06c75" },
+    { "key": "iat", "color": "#6cb6ff" },
+    { "key": "dam", "color": "#e6a23c" },
+    { "key": "flkc", "color": "#6fbf73" }
+  ]
+}

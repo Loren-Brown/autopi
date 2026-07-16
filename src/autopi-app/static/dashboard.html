@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>autopi · Dash</title>
+  <link rel="stylesheet" href="/static/style.css?v=17" />
+  <link rel="icon" href="/static/brand-mark.svg" type="image/svg+xml" />
+</head>
+<body data-view="dashboard">
+  <header class="top top-dash">
+    <a class="brand brand-compact" href="/" aria-label="autopi home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-word">
+        <span class="brand-auto">auto</span><span class="brand-pi">pi</span>
+      </span>
+    </a>
+    <div class="status status-dash">
+      <span id="motion" class="dash-motion" data-state="unknown" aria-label="Motion status">—</span>
+      <button type="button" id="soundEnable" class="pill sound-enable sound-off">Tap for sound</button>
+      <span id="conn" class="pill offline">connecting</span>
+      <span id="ecu" class="meta">ECU —</span>
+      <span id="rate" class="meta">— Hz</span>
+    </div>
+  </header>
+
+  <p id="error" class="error" hidden></p>
+
+  <section class="readouts" id="readouts" aria-label="Live readouts"></section>
+
+  <section class="ap-share" id="apShare" hidden>
+    <h2>Guest WiFi</h2>
+    <p class="ap-blurb">Scan to join <span id="guestSsid">AUTOPI</span>, then open the app. Guest clients land on the Detailed view by default.</p>
+    <div class="ap-grid">
+      <figure>
+        <img id="wifiQr" alt="WiFi join QR code" width="180" height="180" />
+        <figcaption>Join WiFi</figcaption>
+      </figure>
+      <figure>
+        <img id="urlQr" alt="App URL QR code" width="160" height="160" />
+        <figcaption>Open app</figcaption>
+      </figure>
+      <div class="ap-meta">
+        <div><span class="lbl">SSID</span> <code id="guestSsidCode">—</code></div>
+        <div><span class="lbl">URL</span> <code id="guestUrl">—</code></div>
+        <div><span class="lbl">Admin</span> <code>USB gadget</code> <span class="hint">(no second WiFi AP on this radio)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/app.js?v=17"></script>
+</body>
+</html>

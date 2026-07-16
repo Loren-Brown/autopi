@@ -3,8 +3,13 @@ SSM dashboard UI server — no CAN / SSM polling.
 
 Serves the static web UI under ``static/``. The browser obtains the
 collector WebSocket URL from ``/config.json`` (``COLLECTOR_WS_URL``) and
-streams live data from ``ssm-collector``. Also exposes guest Wi‑Fi QR /
-AP info helpers and captive-portal soft-landing routes.
+streams live data from ``ssm-collector``. Two HTML views are exposed:
+
+* ``/detailed`` (default) — Detailed table + charts for secondary clients
+* ``/dashboard`` — Dash / Car gauges + guest Wi‑Fi QR for the primary client
+
+Also exposes guest Wi‑Fi QR / AP info helpers and captive-portal soft-landing
+routes.
 
 Entry
 -----
@@ -36,10 +41,35 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 
 STATIC_DIR = Path(__file__).parent / "static"
+CONFIG_DIR = Path(__file__).parent / "configs"
 AP_ENV_PATH = Path("/etc/autopi/ap.env")
 
 app = FastAPI(title="autopi SSM dashboard UI")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+_NO_CACHE = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+
+@app.middleware("http")
+async def disable_ui_cache(request: Request, call_next):
+    """
+    Prevent browsers from caching HTML/CSS/JS/config so a normal refresh
+    picks up UI edits without restarting the web process.
+    """
+    response = await call_next(request)
+    path = request.url.path
+    if (
+        path.startswith("/static/")
+        or path.startswith("/configs/")
+        or path in ("/", "/dashboard", "/detailed")
+    ):
+        for key, val in _NO_CACHE.items():
+            response.headers[key] = val
+    return response
 
 
 def collector_ws_url() -> str:
@@ -183,9 +213,9 @@ def _qr_data_uri(payload: str, *, scale: int) -> str:
 
 def _dashboard_url(ap: dict[str, str]) -> str:
     """
-    Resolve the guest-facing dashboard URL.
+    Resolve the guest-facing app URL (Detailed view by default).
 
-    Prefers ``GUEST_DASHBOARD_URL``, else ``http://<AP_HOSTNAME|:8080/``
+    Prefers ``GUEST_DASHBOARD_URL``, else ``http://<AP_HOSTNAME>:8080/detailed``
     (falling back through ``GUEST_HOSTNAME`` to ``autopi.lan``).
 
     Args:
@@ -197,13 +227,49 @@ def _dashboard_url(ap: dict[str, str]) -> str:
     if ap.get("GUEST_DASHBOARD_URL"):
         return ap["GUEST_DASHBOARD_URL"]
     host = ap.get("AP_HOSTNAME") or ap.get("GUEST_HOSTNAME") or "autopi.lan"
-    return f"http://{host}:8080/"
+    return f"http://{host}:8080/detailed"
 
 
 @app.get("/")
-async def index() -> FileResponse:
-    """Serve the dashboard shell (``static/index.html``)."""
-    return FileResponse(STATIC_DIR / "index.html")
+async def index(request: Request) -> RedirectResponse:
+    """
+    Path-based landing: Dash for trusted/dev clients, Detailed for guests.
+
+    Trusted = localhost, USB gadget / Mac Internet Sharing pools, admin subnet.
+    Guest AP clients (and anyone else) get the Detailed view.
+    """
+    ap = _load_ap_env()
+    if _client_is_trusted(request, ap):
+        return RedirectResponse("/dashboard", status_code=302)
+    return RedirectResponse("/detailed", status_code=302)
+
+
+@app.get("/detailed")
+async def detailed_view() -> FileResponse:
+    """Serve the Detailed view (same gauges/charts as Dash; no guest QR panel)."""
+    return FileResponse(STATIC_DIR / "detailed.html", headers=_NO_CACHE)
+
+
+@app.get("/dashboard")
+async def dashboard_view() -> FileResponse:
+    """Serve the Dash / Car view (gauges + charts + guest Wi‑Fi QR)."""
+    return FileResponse(STATIC_DIR / "dashboard.html", headers=_NO_CACHE)
+
+
+@app.get("/configs/{name}.json", response_model=None)
+async def view_config(name: str) -> FileResponse | JSONResponse:
+    """
+    Per-view UI config (channel order/colors, Dash refresh rate, history windows).
+
+    Args:
+        name: ``dashboard`` or ``detailed``.
+    """
+    if name not in ("dashboard", "detailed"):
+        return JSONResponse({"error": "unknown view"}, status_code=404)
+    path = CONFIG_DIR / f"{name}.json"
+    if not path.is_file():
+        return JSONResponse({"error": "config missing"}, status_code=404)
+    return FileResponse(path, media_type="application/json", headers=_NO_CACHE)
 
 
 # Captive-portal probes (phones hit these on port 80 → redirected to this app).
@@ -215,12 +281,12 @@ async def apple_captive() -> HTMLResponse:
     Soft landing for Apple captive-portal detection URLs.
 
     Returns:
-        Tiny HTML page that meta-refreshes to the dashboard URL.
+        Tiny HTML page that meta-refreshes to the default (Detailed) URL.
     """
     url = _dashboard_url(_load_ap_env())
     return HTMLResponse(
         f"<!DOCTYPE html><html><head><meta http-equiv='refresh' content='0;url={url}'/>"
-        f"<title>autopi</title></head><body><p><a href='{url}'>Open dashboard</a></p></body></html>"
+        f"<title>autopi</title></head><body><p><a href='{url}'>Open detailed view</a></p></body></html>"
     )
 
 

@@ -60,6 +60,47 @@
       "problemMatcher": []
     },
     {
+      "label": "autopi: sync UI (no restart)",
+      "detail": "rsync src/autopi-app to the Pi, then open Dash with a cache-bust URL",
+      "dependsOn": [
+        "autopi: rsync UI only",
+        "autopi: open Dash (cache bust)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "autopi: rsync UI only",
+      "type": "shell",
+      "command": "./sync_ui.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "autopi: open Dash (cache bust)",
+      "type": "shell",
+      "command": "source .env && open \"http://${PI_HOST}:8080/dashboard?t=$(date +%s)\"",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "echo": true,
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "autopi: Pi setup",
       "detail": "One-time / incremental Pi bootstrap via ./pi_setup.sh",
       "type": "shell",

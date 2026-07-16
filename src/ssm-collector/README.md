@@ -73,7 +73,7 @@ Long-running service used by the dashboard:
 - Background thread: SSM init → batch poll → `TelemetryStore`
 - Async broadcast loop: JSON `update` messages to connected WS clients
 - Endpoints: `/ws` (snapshot then updates), `/snapshot`, `/health`
-- Dashboard channel set is `DASHBOARD_SPECS` (coolant, IAT, DAM, fine knock)
+- Dashboard channel set is `DASHBOARD_SPECS` (coolant, IAT, DAM, fine knock, vehicle speed)
 
 Defaults: `COLLECTOR_HOST=0.0.0.0`, `COLLECTOR_PORT=8090`.
 

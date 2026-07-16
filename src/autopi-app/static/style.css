@@ -1,14 +1,23 @@
 :root {
-  --bg: #1a1c1e;
-  --panel: #24282c;
-  --ink: #e8eaed;
-  --muted: #9aa3ad;
-  --line: #3a4148;
-  --accent: #e6a23c;
+  /* Subaru STI / WRC homage palette */
+  --sti-blue: #013c74;
+  --sti-gold: #e8b923;
+  --sti-magenta: #c80e47;
+  --sti-ink: #f4f6f8;
+
+  --bg: #0c1016;
+  --panel: #151b24;
+  --ink: var(--sti-ink);
+  --muted: #9aa8b8;
+  --line: #2a3544;
+  --accent: var(--sti-gold);
   --ok: #6fbf73;
   --bad: #e06c75;
   --cool: #6cb6ff;
   --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+  /* Condensed italic stack — STI wordmark vibe without webfonts (works offline on guest AP) */
+  --sti-sans: "Arial Narrow", "Helvetica Neue Condensed Bold", "Helvetica Condensed",
+    "Futura Condensed", Impact, "Arial Black", sans-serif;
   --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
@@ -18,7 +27,8 @@ html, body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(1200px 500px at 10% -10%, #2a3036 0%, transparent 60%),
+    radial-gradient(1100px 480px at 8% -12%, color-mix(in srgb, var(--sti-blue) 55%, #000) 0%, transparent 58%),
+    radial-gradient(900px 420px at 100% 0%, color-mix(in srgb, var(--sti-magenta) 22%, transparent) 0%, transparent 50%),
     var(--bg);
   color: var(--ink);
   font-family: var(--sans);
@@ -26,18 +36,100 @@ html, body {
 
 .top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.25rem 1.5rem 0.75rem;
-  border-bottom: 1px solid var(--line);
+  padding: 1.1rem 1.5rem 0.85rem;
+  border-bottom: 2px solid color-mix(in srgb, var(--sti-gold) 55%, var(--line));
 }
 
+.brand-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+}
+
+/* Vector brand: CSS-sized SVG mark + STI-style wordmark */
 .brand {
-  font-size: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-mark {
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  background: url("/static/brand-mark.svg") center / contain no-repeat;
+  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--sti-gold) 35%, transparent));
+}
+
+.brand-word {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--sti-sans);
+  font-style: italic;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 1.85rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
   text-transform: lowercase;
+  transform: skewX(-8deg);
+}
+
+.brand-auto {
+  color: var(--sti-ink);
+  text-shadow: 0 1px 0 #000;
+}
+
+.brand-pi {
+  color: var(--sti-gold);
+  margin-left: 0.02em;
+  text-shadow:
+    0 0 0.55rem color-mix(in srgb, var(--sti-gold) 45%, transparent),
+    0 1px 0 #000;
+}
+
+.brand-pi::after {
+  content: "";
+  display: inline-block;
+  width: 0.42em;
+  height: 0.12em;
+  margin-left: 0.12em;
+  vertical-align: 0.12em;
+  background: var(--sti-magenta);
+  box-shadow: 0 0 0.35rem color-mix(in srgb, var(--sti-magenta) 50%, transparent);
+}
+
+.view-nav {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.view-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+}
+
+.view-link:hover {
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.view-link.active {
+  color: var(--sti-ink);
+  border-color: color-mix(in srgb, var(--sti-gold) 65%, var(--line));
+  background: color-mix(in srgb, var(--sti-blue) 55%, var(--panel));
 }
 
 .status {
@@ -237,4 +329,376 @@ html, body {
 .ap-meta .hint {
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+.detail-table-wrap {
+  padding: 1.25rem 1.5rem 0.5rem;
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.detail-table th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--panel) 70%, #000);
+}
+
+.detail-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.detail-table .col-value {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.detail-table .col-units,
+.detail-table .col-range,
+.detail-table .col-id {
+  color: var(--muted);
+}
+
+.detail-table code {
+  color: var(--cool);
+}
+
+/* ── Dash / Car: daylight LCD, glanceable big numbers (no gauges/charts) ── */
+body[data-view="dashboard"] {
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+body[data-view="dashboard"] .top-dash {
+  padding: 0.45rem 0.85rem;
+  border-bottom: 3px solid var(--sti-gold);
+  background: #000;
+  min-height: 0;
+}
+
+body[data-view="dashboard"] .brand-compact .brand-mark {
+  width: 1.6rem;
+  height: 1.6rem;
+  filter: none;
+}
+
+body[data-view="dashboard"] .brand-compact .brand-word {
+  font-size: 1.25rem;
+  transform: skewX(-6deg);
+}
+
+body[data-view="dashboard"] .status-dash {
+  font-size: 0.95rem;
+  color: #fff;
+  gap: 0.85rem;
+}
+
+body[data-view="dashboard"] .status-dash .meta {
+  color: #fff;
+}
+
+body[data-view="dashboard"] .dash-motion {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  padding: 0.2rem 0.65rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+}
+
+body[data-view="dashboard"] .dash-motion[data-state="moving"] {
+  background: #0a6b2c;
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .dash-motion[data-state="stopped"] {
+  color: #000;
+  background: var(--sti-gold);
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .dash-motion[data-state="parked"] {
+  background: #1a4a8a;
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .dash-motion[data-state="unknown"] {
+  color: #fff;
+  background: #333;
+  border-color: #666;
+}
+
+body[data-view="dashboard"] .pill {
+  border-width: 2px;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.7rem;
+}
+
+body[data-view="dashboard"] .pill.online {
+  color: #fff;
+  background: #0a6b2c;
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .pill.offline {
+  color: #fff;
+  background: #8b1020;
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .sound-enable {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body[data-view="dashboard"] .sound-enable.sound-off {
+  color: #000;
+  background: var(--sti-gold);
+  border-color: #fff;
+  animation: dash-flash 1.2s step-end infinite;
+}
+
+body[data-view="dashboard"] .sound-enable.sound-on {
+  color: #fff;
+  background: #0a6b2c;
+  border-color: #fff;
+}
+
+body[data-view="dashboard"] .error {
+  margin: 0.5rem 0.75rem 0;
+  font-size: 1.05rem;
+  border-width: 2px;
+}
+
+body[data-view="dashboard"] .readouts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  height: calc(100vh - 3.25rem);
+  box-sizing: border-box;
+}
+
+body[data-view="dashboard"] .readout-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+  background: #000;
+  border: 3px solid #fff;
+  border-radius: 2px;
+  padding: 1.6rem 0.5rem 1.6rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body[data-view="dashboard"] .readout-max,
+body[data-view="dashboard"] .readout-min {
+  position: absolute;
+  left: 0.5rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sti-gold);
+  line-height: 1.1;
+  background: #000;
+  padding: 0.1rem 0.25rem;
+  pointer-events: none;
+}
+
+body[data-view="dashboard"] .readout-range-val {
+  font-size: clamp(1rem, 2.8vw, 1.45rem);
+}
+
+body[data-view="dashboard"] .readout-range-lbl {
+  font-size: clamp(0.55rem, 1.4vw, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  opacity: 0.85;
+}
+
+body[data-view="dashboard"] .readout-max {
+  top: 0.35rem;
+}
+
+body[data-view="dashboard"] .readout-min {
+  bottom: 0.35rem;
+  color: #fff;
+}
+
+body[data-view="dashboard"] .readout-max.flash .readout-range-val,
+body[data-view="dashboard"] .readout-min.flash .readout-range-val {
+  animation: dash-flash 0.7s step-end infinite;
+}
+
+body[data-view="dashboard"] .readout-thresh-high,
+body[data-view="dashboard"] .readout-thresh-low {
+  position: absolute;
+  right: 0.5rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--sti-gold);
+  background: #000;
+  padding: 0.1rem 0.25rem;
+  pointer-events: none;
+}
+
+body[data-view="dashboard"] .readout-thresh-high {
+  top: 0.35rem;
+}
+
+body[data-view="dashboard"] .readout-thresh-low {
+  bottom: 0.35rem;
+}
+
+body[data-view="dashboard"] .thresh-alarm {
+  display: none;
+  position: absolute;
+  inset: -0.15rem;
+  z-index: 4;
+  background: #e10600;
+  border: 2px solid #ff3b30;
+  box-sizing: border-box;
+  transform: scale(2);
+  transform-origin: center;
+}
+
+body[data-view="dashboard"] .readout-thresh-high .thresh-alarm {
+  transform-origin: top right;
+}
+
+body[data-view="dashboard"] .readout-thresh-low .thresh-alarm {
+  transform-origin: bottom right;
+}
+
+body[data-view="dashboard"] .readout-thresh-high.alarm .thresh-alarm,
+body[data-view="dashboard"] .readout-thresh-low.alarm .thresh-alarm {
+  display: block;
+  animation: dash-alarm-blink 0.7s step-end infinite;
+}
+
+@keyframes dash-alarm-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dash-flash {
+  0%,
+  49% {
+    color: #e10600;
+  }
+  50%,
+  100% {
+    color: #fff;
+  }
+}
+
+body[data-view="dashboard"] .readout-label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--sti-sans);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(1rem, 2.8vw, 1.6rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sti-gold);
+  text-align: center;
+}
+
+body[data-view="dashboard"] .readout-value {
+  position: relative;
+  z-index: 1;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 10vw, 6.5rem);
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-align: center;
+  text-shadow: none;
+}
+
+body[data-view="dashboard"] .readout-units {
+  position: relative;
+  z-index: 1;
+  font-family: var(--mono);
+  font-size: clamp(1rem, 2.6vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* Keep QR share usable but visually secondary on Dash */
+body[data-view="dashboard"] .ap-share {
+  position: fixed;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  max-width: min(22rem, 42vw);
+  max-height: 38vh;
+  overflow: auto;
+  margin: 0;
+  opacity: 0.92;
+  border: 2px solid var(--sti-gold);
+  background: #000;
+  z-index: 5;
+}
+
+body[data-view="dashboard"] .ap-share h2,
+body[data-view="dashboard"] .ap-blurb,
+body[data-view="dashboard"] .ap-meta,
+body[data-view="dashboard"] .ap-share figcaption {
+  color: #fff;
 }

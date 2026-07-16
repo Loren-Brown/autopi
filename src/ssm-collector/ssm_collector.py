@@ -57,6 +57,7 @@ DASHBOARD_SPECS: list[tuple[str, str, str, str, float, float]] = [
     ("P11", "C", "iat", "Intake Temp", -20.0, 80.0),
     ("E31", "multiplier", "dam", "DAM", 0.0, 1.0),
     ("E41", "degrees", "flkc", "Fine Knock", -5.0, 5.0),
+    ("P9", "mph", "speed", "Vehicle Speed", 0.0, 160.0),
 ]
 
 
