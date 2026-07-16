@@ -1,8 +1,10 @@
+.DS_Store
 .env
 .venv
 __pycache__/
 *.pyc
 .ruff_cache/
-docs/romraider/
 dev_scripts/
+docs/
+
 
