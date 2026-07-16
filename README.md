@@ -6,6 +6,8 @@
 
 Typical use: plug the Pi into the car (and optionally a Mac over USB gadget for admin/SSH), join the guest Wi‑Fi AP from a phone, and open the dashboard. During development you can run the same stack on your laptop through an SSH tunnel to `socketcand` on the Pi.
 
+https://github.com/user-attachments/assets/57caf278-525e-41d4-851a-ecd953c2f85f
+
 **Setup and running:** see [SETUP.md](SETUP.md).
 
 ## System diagram
