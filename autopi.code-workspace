@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Teensy4_Subaru_SSM_Simulator"
+		}
+	],
+	"settings": {}
+}

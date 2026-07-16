@@ -1,0 +1,94 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "autopi: SSM web (local)",
+      "detail": "Run collector + dashboard on the Pi, then open the browser",
+      "dependsOn": [
+        "autopi: start local web",
+        "autopi: open local dashboard"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "autopi: start local web",
+      "type": "shell",
+      "command": "./run_local.sh --web",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONUNBUFFERED": "1"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": false
+      },
+      "problemMatcher": {
+        "owner": "autopi",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting SSM collector \\+ web UI on Pi",
+          "endsPattern": "Application startup complete|Uvicorn running|SSM dashboard UI"
+        }
+      }
+    },
+    {
+      "label": "autopi: open local dashboard",
+      "type": "shell",
+      "command": "source .env && open \"http://${PI_HOST}:8080/\"",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "echo": true,
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "autopi: Pi setup",
+      "detail": "One-time / incremental Pi bootstrap via ./pi_setup.sh",
+      "type": "shell",
+      "command": "./pi_setup.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "autopi: network map",
+      "detail": "Print live Pi network map (USB WAN, APs, SSH, services)",
+      "type": "shell",
+      "command": "set -a && source .env && set +a && ssh -o ConnectTimeout=10 \"${PI_USER}@${PI_HOST}\" 'bash -s' < raspberryPiSetup/print_network_map.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
