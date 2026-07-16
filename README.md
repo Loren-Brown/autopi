@@ -46,6 +46,8 @@ flowchart LR
   DEV <-->|USB-C| USB
 ```
 
+
+
 Diagram source is [Mermaid](https://mermaid.js.org/) (renders on GitHub, GitLab, and many Markdown previews).
 
 ## Why is data logging a Subaru difficult?
@@ -142,6 +144,7 @@ Future plans (not a commitment of order):
 - [ ] **Offline map / replay** — play back a logged run in the same gauges/charts UI
 - [ ] **Packaging** — tagged releases, clearer sim vs car profiles, optional Docker-free one-liner install docs only in [SETUP.md](SETUP.md)
 - [ ] **Hardening** — rotate guest PSK from UI (admin path), rate-limit guest API, document secure USB-only admin
+- [ ] Add direct support for ROM Raider ECU Address Mappings (Currently only setup for my exact ECU variant)
 
 
 

@@ -11,3 +11,40 @@ dependencies = [
     "uvicorn[standard]>=0.32.0",
     "segno>=1.6.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.0",
+]
+
+# Dev-only tools (ruff, etc.) are opt-in. Pi deploy uses bare `uv sync` and must
+# not pull them; locally run `uv sync --group dev` (or `uv sync --dev`).
+[tool.uv]
+default-groups = []
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line length handled by formatter / line-length above
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ssm_client", "ssm_runtime", "ssm_collector", "ssm_main", "web_main", "obd_main"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

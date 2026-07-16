@@ -1,0 +1,240 @@
+:root {
+  --bg: #1a1c1e;
+  --panel: #24282c;
+  --ink: #e8eaed;
+  --muted: #9aa3ad;
+  --line: #3a4148;
+  --accent: #e6a23c;
+  --ok: #6fbf73;
+  --bad: #e06c75;
+  --cool: #6cb6ff;
+  --mono: "IBM Plex Mono", "SF Mono", "Menlo", monospace;
+  --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #2a3036 0%, transparent 60%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+}
+
+.pill.online {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--line));
+}
+
+.pill.offline {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 50%, var(--line));
+}
+
+.error {
+  margin: 0.75rem 1.5rem 0;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--bad) 18%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--bad) 45%, var(--line));
+  color: #ffd0d4;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.gauge-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.85rem 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gauge-card h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.gauge-card canvas {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1.4 / 1;
+}
+
+.gauge-value {
+  font-family: var(--mono);
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.gauge-units {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.chart-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chart-card canvas {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+@media (max-width: 980px) {
+  .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .charts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .gauges { grid-template-columns: 1fr; }
+  .top { flex-direction: column; align-items: flex-start; }
+}
+
+.ap-share {
+  margin: 0 1.5rem 1.5rem;
+  padding: 1rem 1.15rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.ap-share h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ap-blurb {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  max-width: 42rem;
+}
+
+.ap-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 1.75rem;
+  align-items: flex-start;
+}
+
+.ap-share figure {
+  margin: 0;
+  text-align: center;
+}
+
+.ap-share img {
+  display: block;
+  background: #1a1c1e;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.ap-share figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ap-meta {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 14rem;
+}
+
+.ap-meta .lbl {
+  display: inline-block;
+  width: 5.5rem;
+  color: var(--muted);
+}
+
+.ap-meta code {
+  color: var(--ink);
+}
+
+.ap-meta .hint {
+  color: var(--muted);
+  font-size: 0.75rem;
+}

@@ -140,10 +140,10 @@ CAN frames travel: `can0` → `python-can` directly.
 | Script | Protocol | Description |
 |--------|----------|-------------|
 | `src/main.py` | SSM *(default)* | Dispatches to logger / collector / UI / OBD |
-| `src/ssm_main.py` | Subaru SSM | Terminal batch reads at 50 Hz |
-| `src/ssm_collector.py` | Subaru SSM | Data collector only — WebSocket on port `8090` |
-| `src/web_main.py` | — | Dashboard UI only on port `8080` (no CAN) |
-| `src/obd_main.py` | OBD-II | Generic OBD-II PIDs at 1 Hz |
+| `src/ssm-collector/ssm_main.py` | Subaru SSM | Terminal batch reads at 50 Hz |
+| `src/ssm-collector/ssm_collector.py` | Subaru SSM | Data collector only — WebSocket on port `8090` |
+| `src/autopi-app/web_main.py` | — | Dashboard UI only on port `8080` (no CAN) |
+| `src/obd-collector/obd_main.py` | OBD-II | Generic OBD-II PIDs at 1 Hz |
 
 The SSM logger automatically reads the ECU ID from the init response and selects the correct address map. Override with `SSM_ECU_ID` in `.env` (e.g. `5C42504007` for a 2011 USDM STI).
 

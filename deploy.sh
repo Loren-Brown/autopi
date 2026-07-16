@@ -38,6 +38,6 @@ CAN_MODE=native
 EOF
 
 echo "Installing dependencies on Pi..."
-ssh "${REMOTE}" "bash -lc 'cd ${REMOTE_DIR} && uv sync'"
+ssh "${REMOTE}" "bash -lc 'cd ${REMOTE_DIR} && uv sync --no-dev'"
 
 echo "Done. To run: ssh ${REMOTE} 'cd ${REMOTE_DIR} && uv run src/main.py'"
