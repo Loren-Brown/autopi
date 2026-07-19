@@ -4,7 +4,6 @@
 __pycache__/
 *.pyc
 .ruff_cache/
-dev_scripts/
 docs/
 
 # Pi-only deploy copy of RomRaider XML — never keep/commit on the laptop
@@ -13,4 +12,7 @@ src/ssm-collector/configs/*.xml
 # Local SSM poll list + regenerable full catalog (created by ssm_collector_setup.sh)
 src/ssm-collector/configs/channels.json
 src/ssm-collector/configs/channels.generated.json
+
+# Local Teensy bench validation helper
+src/ssm-collector/test/validate_teensy_ssm.py
 

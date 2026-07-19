@@ -130,6 +130,41 @@
         "clear": true
       },
       "problemMatcher": []
+    },
+    {
+      "label": "kill_collector",
+      "detail": "Kill processes on :8090 on the Pi and this machine",
+      "type": "shell",
+      "command": "./kill_collector.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "test_collector",
+      "detail": "Run all ssm-collector test scripts (src/ssm-collector/test/*.py)",
+      "type": "shell",
+      "command": "./src/ssm-collector/test/run_all.sh",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONUNBUFFERED": "1"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": []
     }
   ]
 }

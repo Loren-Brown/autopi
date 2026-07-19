@@ -54,7 +54,20 @@ ssm-collector/
 ├── configs/
 │   ├── channels.json   Collector poll list (committed)
 │   └── *.xml           Pi-only RomRaider copy (gitignored; from deploy.sh)
-└── test/               Placeholder for collector tests
+└── test/
+│   └── validate_teensy_ssm.py  XML ↔ Teensy header + live CAN checks
+```
+
+### Bench validation (Teensy)
+
+With the companion Teensy simulator flashed and (for live mode) CAN reachable:
+
+```bash
+# Addresses/lengths: RomRaider XML ↔ Teensy ssm_addresses.h ↔ channels.json
+uv run src/ssm-collector/test/validate_teensy_ssm.py --offline
+
+# Also SSM init + single/batch reads over CAN (CAN_MODE from .env)
+uv run src/ssm-collector/test/validate_teensy_ssm.py
 ```
 
 ### `ssm_client.py`

@@ -17,8 +17,11 @@ src/
   autopi-app/             UI: /dashboard = 2‑DIN glanceable Dash; /detailed = mobile secondary
   obd-collector/          Generic OBD-II terminal poller
 raspberryPiSetup/         One-shot Pi setup scripts (invoked by pi_setup.sh over SSH)
-dev_scripts/              Offline tools (Teensy header gen, etc.) — gitignored
+dev_scripts/              Offline tools — gitignored
 docs/romraider/           Upstream RomRaider logger XML — gitignored; ROMRAIDER_XML points here on laptop
+                          Teensy SSM header generation lives in the companion
+                          Teensy4_Subaru_SSM_Simulator repo (autopi submodule +
+                          scripts/generate_ssm_header.py / build.sh).
 ```
 
 Package directories under `src/` use **hyphens** (`ssm-collector`, `autopi-app`, `obd-collector`). They are not importable as Python packages; `src/main.py` adds them to `sys.path` before importing.
