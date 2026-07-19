@@ -30,6 +30,7 @@ Plus all ``ssm_runtime`` CAN / ``SSM_ECU_ID`` variables.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import threading
 import time
@@ -43,22 +44,13 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from ssm_client import SSMClient, SsmParam
-from ssm_runtime import create_bus, load_params, resolve_ecu_id
+from ssm_runtime import create_bus, load_enabled_channel_ids, load_params, resolve_ecu_id
 
 POLL_INTERVAL = 0.020  # 50 Hz SSM poll
 BROADCAST_INTERVAL = 0.050  # 20 Hz client push
 HISTORY_SECONDS = 90.0
 HISTORY_HZ = 20.0
 HISTORY_MAXLEN = int(HISTORY_SECONDS * HISTORY_HZ)
-
-# (param_id, preferred_units, ui_key, label, gauge_min, gauge_max)
-DASHBOARD_SPECS: list[tuple[str, str, str, str, float, float]] = [
-    ("P2", "C", "coolant", "Coolant Temp", -20.0, 120.0),
-    ("P11", "C", "iat", "Intake Temp", -20.0, 80.0),
-    ("E31", "multiplier", "dam", "DAM", 0.0, 1.0),
-    ("E41", "degrees", "flkc", "Fine Knock", -5.0, 5.0),
-    ("P9", "mph", "speed", "Vehicle Speed", 0.0, 160.0),
-]
 
 
 @dataclass
@@ -68,8 +60,8 @@ class ParamMeta:
 
     Attributes:
         id: SSM param id (e.g. ``\"P2\"``).
-        key: Short UI key (e.g. ``\"coolant\"``).
-        label: Gauge / chart title.
+        key: Short UI key (RomRaider id lowercased, e.g. ``\"p2\"``).
+        label: Gauge / chart title (RomRaider param name).
         name: Full name from the address map.
         units: Engineering units string.
         min: Gauge lower bound.
@@ -104,36 +96,33 @@ class TelemetryStore:
         self.running = False
         self._last_history_t = 0.0
 
-    def configure(
-        self,
-        params: list[SsmParam],
-        specs: list[tuple[str, str, str, str, float, float]],
-    ) -> None:
+    def configure(self, params: list[SsmParam]) -> None:
         """
         Reset meta/values/history for the active parameter set.
 
+        UI metadata (key, label, units, gauge min/max) comes from each
+        :class:`~ssm_client.SsmParam` / RomRaider XML conversion — not from
+        ``channels.json``.
+
         Args:
-            params: Loaded SSM parameters (must be a subset of ``specs`` ids).
-            specs: Dashboard tuples ``(id, units, key, label, min, max)``.
+            params: Loaded SSM parameters to expose on the WebSocket feed.
         """
-        spec_by_id = {s[0]: s for s in specs}
         with self._lock:
             self.meta.clear()
             self.values.clear()
             self.history.clear()
             for p in params:
-                pid, _units, key, label, gmin, gmax = spec_by_id[p.id]
-                self.meta[pid] = ParamMeta(
-                    id=pid,
-                    key=key,
-                    label=label,
+                self.meta[p.id] = ParamMeta(
+                    id=p.id,
+                    key=p.id.lower(),
+                    label=p.name,
                     name=p.name,
                     units=p.units,
-                    min=gmin,
-                    max=gmax,
+                    min=p.gauge_min,
+                    max=p.gauge_max,
                 )
-                self.values[pid] = float("nan")
-                self.history[pid] = deque(maxlen=HISTORY_MAXLEN)
+                self.values[p.id] = float("nan")
+                self.history[p.id] = deque(maxlen=HISTORY_MAXLEN)
 
     def update(self, results: dict[str, float], now: float) -> None:
         """
@@ -180,8 +169,7 @@ class TelemetryStore:
                 },
                 "values": dict(self.values),
                 "history": {
-                    pid: [[t, v] for t, v in series]
-                    for pid, series in self.history.items()
+                    pid: [[t, v] for t, v in series] for pid, series in self.history.items()
                 },
             }
 
@@ -227,14 +215,20 @@ def _poll_loop() -> None:
         ecu_id = resolve_ecu_id(detected)
         store.ecu_id = ecu_id
 
-        param_specs = [(pid, units) for pid, units, *_ in DASHBOARD_SPECS]
-        params = load_params(ecu_id, param_specs)
-        if not params:
-            store.error = "No params loaded — check SSM_ECU_ID and ssm_configs.json"
+        try:
+            channel_ids = load_enabled_channel_ids()
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            store.error = f"Invalid channels.json: {exc}"
             print(store.error)
             return
 
-        store.configure(params, DASHBOARD_SPECS)
+        params = load_params(ecu_id, channel_ids)
+        if not params:
+            store.error = "No params loaded — check SSM_ECU_ID / ROMRAIDER_XML"
+            print(store.error)
+            return
+
+        store.configure(params)
         store.running = True
         store.error = None
         print(f"Polling {len(params)} params at {1000 * POLL_INTERVAL:.0f} ms")

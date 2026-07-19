@@ -2,7 +2,8 @@
 Live SSM terminal logger for Subaru ECUs (e.g. 2011 USDM STI / EJ257).
 
 Connects over CAN, runs SSM init to learn the ECU ID, loads a curated
-parameter list from ``ssm_configs.json``, then polls at ~50 Hz and refreshes
+parameter list from RomRaider XML (``ROMRAIDER_XML``), then polls at ~50 Hz
+and refreshes
 the terminal at ~10 Hz to avoid flicker.
 
 Entry
@@ -25,20 +26,20 @@ from ssm_runtime import create_bus, load_params, resolve_ecu_id
 POLL_INTERVAL = 0.020  # 20 ms → ~50 Hz
 DISPLAY_INTERVAL = 0.100  # refresh terminal at 10 Hz to avoid flicker
 
-# ── Parameters to display — (param_id, preferred_units) ──────────────────────
+# ── Parameters to display (units from first RomRaider XML conversion) ────────
 DISPLAY_PARAMS = [
-    ("P8", "rpm"),  # Engine Speed
-    ("P9", "mph"),  # Vehicle Speed
-    ("P2", "C"),  # Coolant Temperature
-    ("P12", "g/s"),  # Mass Airflow
-    ("P13", "%"),  # Throttle Opening Angle
-    ("P25", "psi"),  # Manifold Relative Pressure (boost)
-    ("P36", "%"),  # Primary Wastegate Duty Cycle
-    ("P23", "degrees"),  # Knock Correction Advance
-    ("P10", "degrees"),  # Ignition Total Timing
-    ("E31", "multiplier"),  # IAM*
-    ("E39", "degrees"),  # Feedback Knock Correction (4-byte)*
-    ("E41", "degrees"),  # Fine Learning Knock Correction (4-byte)*
+    "P8",  # Engine Speed
+    "P9",  # Vehicle Speed
+    "P2",  # Coolant Temperature
+    "P12",  # Mass Airflow
+    "P13",  # Throttle Opening Angle
+    "P25",  # Manifold Relative Pressure (boost)
+    "P36",  # Primary Wastegate Duty Cycle
+    "P23",  # Knock Correction Advance
+    "P10",  # Ignition Total Timing
+    "E31",  # IAM*
+    "E39",  # Feedback Knock Correction (4-byte)*
+    "E41",  # Fine Learning Knock Correction (4-byte)*
 ]
 
 # ANSI helpers
@@ -112,7 +113,7 @@ def main() -> None:
 
     params = load_params(ecu_id, DISPLAY_PARAMS)
     if not params:
-        print("No params loaded — check SSM_ECU_ID and ssm_configs.json")
+        print("No params loaded — check SSM_ECU_ID / ROMRAIDER_XML")
         bus.shutdown()
         return
 

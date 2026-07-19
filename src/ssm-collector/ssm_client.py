@@ -102,6 +102,39 @@ class SsmParam:
         """Engineering units string from the first conversion, or ``\"\"``."""
         return self.conversions[0].get("units", "") if self.conversions else ""
 
+    def _default_gauge_span(self) -> tuple[float, float]:
+        """Fallback gauge range when the XML omits gauge_min / gauge_max."""
+        if self.units == "multiplier":
+            return 0.0, 1.0
+        return 0.0, 100.0
+
+    @property
+    def gauge_min(self) -> float:
+        """Gauge lower bound from the first conversion, or a units-based default."""
+        default_min, _ = self._default_gauge_span()
+        if not self.conversions:
+            return default_min
+        raw = self.conversions[0].get("gauge_min")
+        try:
+            return float(raw) if raw is not None else default_min
+        except (TypeError, ValueError):
+            return default_min
+
+    @property
+    def gauge_max(self) -> float:
+        """Gauge upper bound from the first conversion, or a units-based default."""
+        _, default_max = self._default_gauge_span()
+        if not self.conversions:
+            return default_max
+        raw = self.conversions[0].get("gauge_max")
+        try:
+            val = float(raw) if raw is not None else default_max
+        except (TypeError, ValueError):
+            val = default_max
+        if val == self.gauge_min:
+            return val + 1.0
+        return val
+
 
 class SSMClient:
     """

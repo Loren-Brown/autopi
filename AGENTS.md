@@ -13,13 +13,12 @@ Product overview: [README.md](README.md). Setup / deploy / run: [SETUP.md](SETUP
 ```
 src/
   main.py                 CLI dispatcher (--collector / --web / --obd / default SSM logger)
-  ssm-collector/          SSM protocol, runtime, collector service, terminal logger
-    configs/ssm_configs.json   Generated address map (gitignored; required at runtime)
+  ssm-collector/          SSM protocol, runtime, collector, raider_reader (RomRaider XML)
   autopi-app/             UI: /dashboard = 2‑DIN glanceable Dash; /detailed = mobile secondary
   obd-collector/          Generic OBD-II terminal poller
 raspberryPiSetup/         One-shot Pi setup scripts (invoked by pi_setup.sh over SSH)
-dev_scripts/              Offline tools (RomRaider parse, Teensy header gen) — gitignored
-docs/romraider/           Upstream RomRaider logger XML/DTD — gitignored; ingest only
+dev_scripts/              Offline tools (Teensy header gen, etc.) — gitignored
+docs/romraider/           Upstream RomRaider logger XML — gitignored; ROMRAIDER_XML points here on laptop
 ```
 
 Package directories under `src/` use **hyphens** (`ssm-collector`, `autopi-app`, `obd-collector`). They are not importable as Python packages; `src/main.py` adds them to `sys.path` before importing.
@@ -56,7 +55,7 @@ Ruff is a **dev-only** dependency (`[dependency-groups] dev`, `[tool.uv] default
 - Prefer small, focused diffs. Do not rewrite unrelated files or add unsolicited docs.
 - Match existing style: type hints, module/function docstrings on Python under `src/`, vanilla HTML/CSS/JS in `autopi-app/static` (no frontend framework).
 - Config: copy `.env.example` → `.env` locally. Never commit `.env` or credentials. Do not put secrets in guest-reachable APIs.
-- SSM addresses/units come from `src/ssm-collector/configs/ssm_configs.json`, loaded by `ssm_runtime.py`. Regenerate with `dev_scripts`.
+- SSM addresses/units come only from RomRaider logger XML (`raider_reader.py`). Laptop: `ROMRAIDER_XML` in `.env` (usually `docs/romraider/…`). Pi: `deploy.sh` copies that file into `src/ssm-collector/configs/` keeping the real basename; runtime picks the single `*.xml` there. Do not reintroduce `ssm_configs.json` or commit logger XML under `configs/`.
 - Never commit dev_scripts directory
 - Never commit docs directory
 - Keep `SSM_ECU_ID` / address maps matched to the target ECU (default stock 2011 STI family `5C42504007`).

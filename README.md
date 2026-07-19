@@ -141,6 +141,7 @@ Future plans (not a commitment of order):
 
 - [ ] **On-device session logging** — write high-rate SSM samples to SD with RTC timestamps (CSV/Parquet), with start/stop from the dashboard
 - [ ] **Richer parameter sets** — selectable channel packs (knock, fueling, boost, etc.) without killing poll rate
+- [ ] **Interactive SSM collector config setup** — TUI/wizard that wraps `ssm_collector_setup.sh` / `channels.generated.json` so you can search, enable channels, and write `channels.json` without hand-editing
 - [ ] **Second radio / admin AP** — USB Wi‑Fi dongle for a true admin SSID alongside guest `AUTOPI`
 - [ ] **Phone captive UX** — more reliable “open dashboard” landing when the AP has no internet
 - [ ] **More ECU maps** — expand beyond the 2011 STI ID; automate ingest from RomRaider defs

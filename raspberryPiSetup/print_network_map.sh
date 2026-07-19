@@ -83,7 +83,7 @@ wan_status() {
       echo "  NM profile: ${con}  (ipv4.method=${method})"
       if [[ "${method}" == "shared" ]]; then
         echo "  ⚠ WARNING: ${wan} is SHARED — Mac may route internet into the Pi and lose uplink."
-        echo "    Re-run configure_raspap_dual_ap.sh to switch to DHCP client."
+        echo "    Re-run configure_raspap_guest_ap.sh to switch to DHCP client."
       fi
     else
       echo "  NM profile: (none active on ${wan})"
@@ -199,7 +199,7 @@ print_aps() {
       echo "  Admin PSK: ${ADMIN_PSK}"
     fi
   else
-    echo "  Config: ${AP_ENV} missing — dual AP not configured yet"
+    echo "  Config: ${AP_ENV} missing — guest AP not configured yet"
   fi
   echo "  hostapd: $(svc_state hostapd.service)"
   echo "  dnsmasq: $(svc_state dnsmasq.service)"

@@ -22,7 +22,8 @@ SETUP_SCRIPTS=(
 
     # WiFi AP (RaspAP) — guest QR; USB gadget remains admin/SSH uplink
     "raspberryPiSetup/install_raspap.sh"         # RaspAP Quick installer
-    "raspberryPiSetup/configure_raspap_dual_ap.sh"  # Guest SSID + usb0 WAN
+    "raspberryPiSetup/configure_raspap_guest_ap.sh" # Guest SSID + usb0 WAN
+    "raspberryPiSetup/configure_wan_dns.sh"         # Pi resolv.conf (NM must not blank DNS)
     "raspberryPiSetup/configure_ap_client_firewall.sh"  # Guest lockdown nftables
     "raspberryPiSetup/install_autopi_web_service.sh"    # collector + web on boot
 
@@ -72,14 +73,14 @@ run_step() {
     # to be present on the Pi first, so this is safe to run before deploy.sh.
     # Forward selected .env knobs so remote scripts can apply them.
     if ssh -o ConnectTimeout=10 "${REMOTE}" \
-        "PI_HOSTNAME=$(printf '%q' "${PI_HOSTNAME}") AP_SSID=$(printf '%q' "${AP_SSID}") AP_HOSTNAME=$(printf '%q' "${AP_HOSTNAME}") bash -s" \
+        "export DEBIAN_FRONTEND=noninteractive; PI_HOSTNAME=$(printf '%q' "${PI_HOSTNAME}") AP_SSID=$(printf '%q' "${AP_SSID}") AP_HOSTNAME=$(printf '%q' "${AP_HOSTNAME}") bash -s" \
         < "${SCRIPT_DIR}/${script}"; then
         echo "✓ ${name} complete"
     else
         local exit_code=$?
-        # Exit code 255 means SSH connection lost — likely a reboot
+        # Exit code 255 means SSH connection lost (reboot, or USB/link blip).
         if [[ ${exit_code} -eq 255 ]]; then
-            echo "  Pi rebooted during ${name}."
+            echo "  SSH lost during ${name} (reboot or link drop) — waiting for Pi..."
             wait_for_pi
         else
             echo "Error: ${name} failed with exit code ${exit_code}." >&2

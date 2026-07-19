@@ -95,7 +95,7 @@ def _load_ap_env() -> dict[str, str]:
     try:
         text = AP_ENV_PATH.read_text()
     except PermissionError:
-        # 640 root:group — service user must share that group (configure_raspap_dual_ap.sh).
+        # 640 root:group — service user must share that group (configure_raspap_guest_ap.sh).
         return {}
     out: dict[str, str] = {}
     for line in text.splitlines():

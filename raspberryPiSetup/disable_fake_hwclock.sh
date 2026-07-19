@@ -5,7 +5,7 @@ UPDATED=0
 
 echo "Uninstall fake-hwclock..."
 if dpkg -s fake-hwclock &>/dev/null; then
-  sudo apt-get -y remove fake-hwclock
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -y remove fake-hwclock
 
   echo "Remove fake-hwclock service from startup..."
   sudo update-rc.d -f fake-hwclock remove || true

@@ -4,13 +4,14 @@
   "format": {
     "multiplier": 2,
     "C": 0,
+    "F": 0,
     "degrees": 1,
     "default": 2
   },
   "channels": [
-    { "key": "coolant", "color": "#e06c75", "high": 105 },
-    { "key": "iat", "color": "#6cb6ff" },
-    { "key": "dam", "color": "#e6a23c", "low": 0.75 },
-    { "key": "flkc", "color": "#6fbf73" }
+    { "key": "p2", "color": "#e06c75", "high": 221 },
+    { "key": "p11", "color": "#6cb6ff" },
+    { "key": "e31", "color": "#e6a23c", "low": 0.75 },
+    { "key": "e41", "color": "#6fbf73" }
   ]
 }

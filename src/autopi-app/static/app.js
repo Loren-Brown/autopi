@@ -107,7 +107,7 @@
 
   function updateMotionAndQr() {
     if (!IS_DASH) return;
-    const meta = findMetaByKey("speed");
+    const meta = findMetaByKey("p9");
     const val = meta ? state.values[meta.id] : NaN;
     const live = val === val;
 
@@ -408,7 +408,7 @@
       btn.textContent = "Tap for sound";
       btn.classList.add("sound-off");
       btn.classList.remove("sound-on");
-      btn.title = "Browsers block audio until you tap — enable coolant high alerts";
+      btn.title = "Browsers block audio until you tap — enable coolant (P2) high alerts";
     }
   }
 
@@ -585,7 +585,7 @@
       if (maxWrap) maxWrap.classList.toggle("flash", maxHit);
       if (minWrap) minWrap.classList.toggle("flash", minHit);
 
-      if (meta.key === "coolant" && highActive) coolantHighAlarm = true;
+      if (meta.key === "p2" && highActive) coolantHighAlarm = true;
     }
     setCoolantHighBuzz(coolantHighAlarm);
     updateMotionAndQr();
@@ -787,10 +787,10 @@
         historySeconds: 90,
         format: FORMAT,
         channels: [
-          { key: "coolant", color: "#e06c75" },
-          { key: "iat", color: "#6cb6ff" },
-          { key: "dam", color: "#e6a23c" },
-          { key: "flkc", color: "#6fbf73" },
+          { key: "p2", color: "#e06c75" },
+          { key: "p11", color: "#6cb6ff" },
+          { key: "e31", color: "#e6a23c" },
+          { key: "e41", color: "#6fbf73" },
         ],
       });
     }

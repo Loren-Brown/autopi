@@ -5,7 +5,7 @@ if dpkg -s i2c-tools &>/dev/null; then
   echo "i2c-tools already installed, skipping apt install."
 else
   echo "Installing Real Time Clock Tools..."
-  sudo apt-get install i2c-tools -y
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install i2c-tools -y
 fi
 
 echo "Enable i2C in raspberry pi config"

@@ -26,6 +26,25 @@ One-time Pi setup, deploy, and how to run the app. For project background (SSM, 
 
    Keep `PI_HOST` aligned with `PI_HOSTNAME` (usually `${PI_HOSTNAME}.local`). `AP_SSID` / `AP_HOSTNAME` are independent of the system hostname.
 
+3. Set `ROMRAIDER_XML` to your RomRaider logger definition (repo-relative or absolute). The laptop reads this path directly; `./deploy.sh` copies it onto the Pi. Example from `.env.example`:
+   ```bash
+   ROMRAIDER_XML=docs/romraider/logger_v370/logger_STD_EN_v370.xml
+   SSM_ECU_ID=5C42504007
+   ```
+   Keep the XML under `docs/romraider/` (gitignored). If the file or `ROMRAIDER_XML` is missing, the steps below will tell you what to fix.
+
+## SSM collector channels
+
+After `.env` points at a real logger XML, generate the full channel catalog and pick what to poll:
+
+```bash
+./ssm_collector_setup.sh
+```
+
+That script checks `.env` for `ROMRAIDER_XML`, verifies the XML file exists, then runs `generate_channels_json.py`. Output is `src/ssm-collector/configs/channels.generated.json` (gitignored) — every param for your ECU with `"enabled": false`, plus an `info` block for human reference.
+
+Copy the entries you want into the committed poll list `src/ssm-collector/configs/channels.json`, set `"enabled": true`, and keep `id` as the RomRaider id (`P2`, `E31`, …). The collector only reads `id` and `enabled`; units/labels/gauges come from the XML at runtime. Details: [src/ssm-collector/README.md](src/ssm-collector/README.md).
+
 ## Passwordless SSH and sudo
 
 1. Generate an SSH key pair on your laptop (skip if you already have one):
@@ -76,12 +95,12 @@ To customise the setup sequence, edit the `SETUP_SCRIPTS` array at the top of `p
 | Packages | `update.sh`, `install_uv.sh`, `install_CAN_utils.sh`, `install_rtc_tools.sh` |
 | PiCAN3 / CAN | overlays, `enable_can0_at_startup.sh`, `install_socketcand.sh` |
 | RTC | overlays, `disable_fake_hwclock.sh` |
-| Guest Wi‑Fi | RaspAP install, dual-AP→single guest AP config, nftables, web systemd units |
+| Guest Wi‑Fi | RaspAP install, guest AP config, nftables, web systemd units |
 | Status | `print_network_map.sh` |
 
 ## Deploy app code
 
-Sync code, write a Pi-specific `.env` (`CAN_MODE=native`), and install Python deps with `uv`:
+Sync code, copy the RomRaider XML from your laptop `ROMRAIDER_XML` path onto the Pi at `src/ssm-collector/configs/<same-filename>.xml`, write a Pi-specific `.env` (`CAN_MODE=native`, `SSM_ECU_ID`), and install Python deps with `uv`:
 
 ```bash
 ./deploy.sh
@@ -163,7 +182,7 @@ The Pi hosts a **guest WiFi AP** on the onboard radio. USB gadget remains the Ma
 
 **Re-apply AP config after RaspAP Hotspot UI changes:**
 ```bash
-ssh ${PI_USER}@${PI_HOST} 'bash -s' < raspberryPiSetup/configure_raspap_dual_ap.sh
+ssh ${PI_USER}@${PI_HOST} 'bash -s' < raspberryPiSetup/configure_raspap_guest_ap.sh
 ssh ${PI_USER}@${PI_HOST} 'bash -s' < raspberryPiSetup/configure_ap_client_firewall.sh
 ```
 

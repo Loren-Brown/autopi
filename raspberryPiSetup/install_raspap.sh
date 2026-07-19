@@ -26,4 +26,4 @@ curl -sL https://install.raspap.com | bash -s -- --yes \
   --check 0
 
 echo "RaspAP install finished."
-echo "Next: configure_raspap_dual_ap.sh (dual SSID + usb0 uplink)."
+echo "Next: configure_raspap_guest_ap.sh (guest SSID + usb0 uplink)."

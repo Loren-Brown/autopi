@@ -11,7 +11,7 @@ The dashboard (`../autopi-app/`) does **not** poll the car; it consumes this col
 | **Collector** (service) | `uv run src/main.py --collector` | Poll SSM ~50 Hz; push updates ~20 Hz on `ws://…:8090/ws` |
 | **Terminal logger** | `uv run src/main.py` (default) | Same SSM poll path; in-place terminal display |
 
-Shared pieces (`ssm_client`, `ssm_runtime`) implement the protocol and config loading for both modes.
+Shared pieces (`ssm_client`, `ssm_runtime`, `raider_reader`) implement the protocol and RomRaider config loading for both modes.
 
 ## Data flow
 
@@ -24,7 +24,11 @@ flowchart LR
   WS["WebSocket /ws<br/>:8090"]
   UI["autopi-app<br/>browser"]
   TERM["ssm_main<br/>terminal"]
+  XML["RomRaider logger XML"]
+  CH["configs/channels.json"]
 
+  CH --> CLIENT
+  XML --> CLIENT
   ECU <-->|0x7E0 / 0x7E8| BUS
   BUS <--> CLIENT
   CLIENT -->|poll ~50 Hz| STORE
@@ -33,7 +37,9 @@ flowchart LR
   CLIENT -->|poll ~50 Hz| TERM
 ```
 
-Address maps and conversion formulas come from `configs/ssm_configs.json` (selected by the 5-byte ECU ID from SSM init, overridable with `SSM_ECU_ID`).
+**Which params to poll** come from committed [`configs/channels.json`](configs/channels.json): each entry has `id`, `enabled`, and optional `info` (units/key/label/min/max for humans only). The collector reads **only** `id` + `enabled`. **Addresses, units, labels, and gauge bounds** come from the RomRaider logger XML (first conversion; selected by the 5-byte ECU ID from SSM init, overridable with `SSM_ECU_ID`). On a laptop, `ROMRAIDER_XML` usually points under `docs/romraider/`. `./deploy.sh` copies that file to `configs/<same-filename>.xml` on the Pi only; at runtime the Pi loads the single `*.xml` in `configs/`.
+
+UI colors/thresholds live separately in `../autopi-app/configs/` — channel `key` values are RomRaider ids lowercased (`p2`, `e31`, …).
 
 ## Structure
 
@@ -41,11 +47,13 @@ Address maps and conversion formulas come from `configs/ssm_configs.json` (selec
 ssm-collector/
 ├── README.md           ← this file
 ├── ssm_client.py       SSM/ISO-TP protocol + param decode
-├── ssm_runtime.py      CAN bus setup, ECU ID, load params from JSON
+├── raider_reader.py    RomRaider logger XML → param map / SsmParam
+├── ssm_runtime.py      CAN bus setup, ECU ID, load params / channel specs
 ├── ssm_collector.py    FastAPI collector service (WebSocket feed)
 ├── ssm_main.py         Terminal live logger (no network UI)
 ├── configs/
-│   └── ssm_configs.json  Address maps + conversions (generated)
+│   ├── channels.json   Collector poll list (committed)
+│   └── *.xml           Pi-only RomRaider copy (gitignored; from deploy.sh)
 └── test/               Placeholder for collector tests
 ```
 
@@ -58,12 +66,62 @@ Low-level SSM over CAN:
 - Commands: init (`0xBF`), batch read (`0xA8`)
 - `SsmParam` — address, length, conversion expr → engineering units
 
+### `raider_reader.py`
+
+Reads RomRaider `logger_*.xml` directly:
+
+- Path from `ROMRAIDER_XML` (repo-relative or absolute)
+- Standard `<parameter>` + per-ECU `<ecuparam>` under protocol `SSM`
+- CLI: `uv run src/ssm-collector/raider_reader.py --summary`
+
+### Channel catalog setup (`ssm_collector_setup.sh`)
+
+From the **repo root**, generate a full disabled catalog from your RomRaider XML:
+
+```bash
+./ssm_collector_setup.sh
+```
+
+The script:
+
+1. Requires a laptop `.env` (suggests `cp .env.example .env` if missing)
+2. Requires `ROMRAIDER_XML` in that file
+3. Requires that XML path to exist on disk
+4. Runs `generate_channels_json.py` → `configs/channels.generated.json` (gitignored)
+
+You can also call the generator directly:
+
+```bash
+uv run src/ssm-collector/generate_channels_json.py
+```
+
+**Choosing what to poll:** open `configs/channels.generated.json`, find the params you want (search by `id` or by `info.label` / `info.units`), and copy those objects into the committed [`configs/channels.json`](configs/channels.json). Set `"enabled": true` on each. Example shape:
+
+```json
+{
+  "id": "P2",
+  "enabled": true,
+  "info": {
+    "units": "F",
+    "key": "p2",
+    "label": "Coolant Temperature",
+    "min": 0.0,
+    "max": 240.0
+  }
+}
+```
+
+- Runtime uses **only** `id` and `enabled`.
+- `info` is for humans (and for matching dashboard `key`s — use the RomRaider id lowercased, e.g. `p2`, in `../autopi-app/configs/`).
+- Do not point `--out` at `channels.json` unless you intend to replace the whole poll list; prefer copy/paste from the generated file so you keep a small enabled set.
+
 ### `ssm_runtime.py`
 
 Shared startup helpers:
 
 - `create_bus()` — `CAN_MODE=native` (SocketCAN `can0`) or `socketcand`
-- `load_params(ecu_id, specs)` — resolve IDs from `ssm_configs.json`
+- `load_enabled_channel_ids()` — enabled ids from `configs/channels.json`
+- `load_params(ecu_id, ids)` — resolve IDs from RomRaider XML
 - `resolve_ecu_id()` — prefer `SSM_ECU_ID` when set
 
 ### `ssm_collector.py`
@@ -73,7 +131,7 @@ Long-running service used by the dashboard:
 - Background thread: SSM init → batch poll → `TelemetryStore`
 - Async broadcast loop: JSON `update` messages to connected WS clients
 - Endpoints: `/ws` (snapshot then updates), `/snapshot`, `/health`
-- Dashboard channel set is `DASHBOARD_SPECS` (coolant, IAT, DAM, fine knock, vehicle speed)
+- Poll channel set from `configs/channels.json` (P2, P11, E31, E41, P9 by default)
 
 Defaults: `COLLECTOR_HOST=0.0.0.0`, `COLLECTOR_PORT=8090`.
 
@@ -88,6 +146,7 @@ Dev/diagnostic UI in the terminal: larger param list (`DISPLAY_PARAMS`), ~50 Hz 
 | `CAN_MODE` | `native` (default) or `socketcand` |
 | `SOCKETCAND_HOST` / `SOCKETCAND_PORT` | Remote CAN when using socketcand |
 | `SSM_ECU_ID` | Force address map (e.g. `5C42504007`) |
+| `ROMRAIDER_XML` | Laptop path to logger XML; omitted on Pi (discovers `configs/*.xml`) |
 | `COLLECTOR_HOST` / `COLLECTOR_PORT` | Collector bind address |
 
 ## Related

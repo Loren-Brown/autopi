@@ -43,6 +43,7 @@ Environment=CAN_MODE=native
 Environment=COLLECTOR_HOST=0.0.0.0
 Environment=COLLECTOR_PORT=8090
 Environment=SSM_ECU_ID=5C42504007
+EnvironmentFile=-${APP_DIR}/.env
 ExecStart=${UV_BIN} run --directory ${APP_DIR} src/main.py --collector
 Restart=on-failure
 RestartSec=3

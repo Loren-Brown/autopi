@@ -9,7 +9,7 @@ elif [[ -x "${SOCKETCAND_BIN}" ]]; then
     echo "socketcand already installed at ${SOCKETCAND_BIN}, skipping build."
 else
     echo "Installing socketcand build dependencies..."
-    sudo apt-get install -y meson gcc libconfig-dev libsocketcan-dev git
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson gcc libconfig-dev libsocketcan-dev git
 
     echo "Cloning and building socketcand..."
     BUILD_DIR=$(mktemp -d)
