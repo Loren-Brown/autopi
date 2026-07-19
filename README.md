@@ -149,6 +149,9 @@ Future plans (not a commitment of order):
 - [ ] **Packaging** — tagged releases, clearer sim vs car profiles, optional Docker-free one-liner install docs only in [SETUP.md](SETUP.md)
 - [ ] **Hardening** — rotate guest PSK from UI (admin path), rate-limit guest API, document secure USB-only admin
 - [ ] Add direct support for ROM Raider ECU Address Mappings (Currently only setup for my exact ECU variant)
+- [ ] **Expand dashboard config features**
+- [ ] **Create SSM validation test suite**
+- [ ] **SSM Service Hardening** — see [ssm-collector TODO](src/ssm-collector/README.md#todo)
 
 
 

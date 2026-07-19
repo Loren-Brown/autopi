@@ -180,8 +180,23 @@ Dev/diagnostic UI in the terminal: larger param list (`DISPLAY_PARAMS`), ~50 Hz 
 | `ROMRAIDER_XML` | Laptop path to logger XML; omitted on Pi (discovers `configs/*.xml`) |
 | `COLLECTOR_HOST` / `COLLECTOR_PORT` | Collector bind address |
 
+## TODO
+
+Gaps to close before treating the collector as safe for unattended real-car use (see also [Test_Plan.md](../../Test_Plan.md)):
+
+- [ ] **Hard caps** — refuse to start if address-slot count or poll Hz exceed safe limits (env-tunable; fail closed)
+- [ ] **Backoff on errors** — exponential backoff + max FC retries, then pause/re-init instead of a tight retry loop
+- [ ] **Clean reconnect** — on repeated timeouts, stop TX, wait, re-`init()`, then resume (OBD unplug / ECU sleep)
+- [ ] **`SAFE_MODE` / first-run profile** — slow poll + tiny channel allowlist for initial car tests
+- [ ] **ECU ID mismatch guard** — warn/refuse if detected ID ≠ configured `SSM_ECU_ID` unless explicitly allowed
+- [ ] **Single-instance guard** — lockfile so laptop + Pi cannot both poll the same bus
+- [ ] **Manual start for first car tests** — keep systemd auto-start off until key-on/idle phases pass (avoid boot-loop init spam)
+- [ ] **Opcode / Gate A test** — automated check that the client can only emit SSM `0xBF` / `0xA8`
+- [ ] **Limit experiments (L1–L3)** — measure and document safe max poll Hz and address slots on a real ECU
+
 ## Related
 
 - Dashboard: [`../autopi-app/README.md`](../autopi-app/README.md)
 - System overview: [repo README](../../README.md)
 - Run / deploy: [SETUP.md](../../SETUP.md)
+- Real-ECU safety test plan: [Test_Plan.md](../../Test_Plan.md)

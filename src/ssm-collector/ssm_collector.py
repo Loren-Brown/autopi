@@ -237,10 +237,25 @@ def _poll_loop() -> None:
         store.error = None
         print(f"Polling {len(params)} params at {1000 * POLL_INTERVAL:.0f} ms")
 
+        fc_failures = 0
         while store.running:
             loop_start = time.monotonic()
-            results = client.batch_read(params)
-            store.update(results, time.time())
+            try:
+                results = client.batch_read(params)
+                store.update(results, time.time())
+                if fc_failures:
+                    print(f"SSM poll recovered after {fc_failures} flow-control miss(es)")
+                fc_failures = 0
+                store.error = None
+            except RuntimeError as exc:
+                # Transient ISO-TP FC misses (Teensy busy / socketcand jitter).
+                if "flow control" in str(exc).lower():
+                    fc_failures += 1
+                    store.error = str(exc)
+                    print(f"SSM poll warning ({fc_failures}): {exc}")
+                    time.sleep(0.05)
+                    continue
+                raise
             elapsed = time.monotonic() - loop_start
             remaining = POLL_INTERVAL - elapsed
             if remaining > 0:
