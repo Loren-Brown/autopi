@@ -32,8 +32,10 @@ Package directories under `src/` use **hyphens** (`ssm-collector`, `autopi-app`,
 # Runtime deps only (what the Pi should use)
 uv sync
 
-# Dev machine: include ruff
+# Dev machine: include ruff + pre-commit
 uv sync --dev
+uv run pre-commit install          # block bad commits locally
+uv run pre-commit run --all-files  # run full suite once
 
 uv run ruff check src
 uv run ruff format src

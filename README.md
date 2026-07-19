@@ -164,4 +164,3 @@ Future plans (not a commitment of order):
 - [RomRaider logger definitions](https://www.romraider.com/forum/viewtopic.php?p=66788#p66788)
 - [RomRaider SSM protocol](https://www.romraider.com/RomRaider/SsmProtocol)
 - [RaspAP Quick installer](https://docs.raspap.com/quick/)
-

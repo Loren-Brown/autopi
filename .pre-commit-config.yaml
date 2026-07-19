@@ -1,0 +1,43 @@
+# Local: uv sync --dev && uv run pre-commit install
+# Run all hooks: uv run pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: ^(uv\.lock|\.gitignore)$
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^src/
+      - id: ruff-format
+        files: ^src/
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: block-dotenv
+        name: block .env commits
+        language: system
+        entry: bash -c 'staged=$(git diff --cached --name-only --diff-filter=ACM); echo "$staged" | grep -E "(^|/)\.env$" >/dev/null && { echo "Refusing to commit .env — keep secrets local (.env.example is OK)"; exit 1; } || exit 0'
+        pass_filenames: false
+      - id: block-romraider-xml
+        name: block RomRaider XML under docs/
+        language: system
+        entry: bash -c 'staged=$(git diff --cached --name-only --diff-filter=ACM); echo "$staged" | grep -E "^docs/romraider/.*\.xml$" >/dev/null && { echo "Refusing to commit docs/romraider/*.xml (gitignored logger defs)"; exit 1; } || exit 0'
+        pass_filenames: false

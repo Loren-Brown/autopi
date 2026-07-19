@@ -20,11 +20,11 @@ This is a **read-only logging** stack today. The plan below treats that as a hyp
 
 ## Threat model (what could go wrong)
 
-1. **Mutating protocol** — accidental send of SSM write / programming / clear commands  
-2. **Wrong ECU / address map** — garbage values (usually not destructive for reads, but false confidence)  
-3. **CAN / ECU overload** — too many address slots or too high poll Hz → missed FC, timeouts, ECU busy  
-4. **Bus contention** — shared powertrain CAN; logger competes with other modules  
-5. **Bad physical layer** — wiring faults, termination, ground loops (can cause bus-off; rare damage path)  
+1. **Mutating protocol** — accidental send of SSM write / programming / clear commands
+2. **Wrong ECU / address map** — garbage values (usually not destructive for reads, but false confidence)
+3. **CAN / ECU overload** — too many address slots or too high poll Hz → missed FC, timeouts, ECU busy
+4. **Bus contention** — shared powertrain CAN; logger competes with other modules
+5. **Bad physical layer** — wiring faults, termination, ground loops (can cause bus-off; rare damage path)
 6. **Software hang / retry storms** — client spamming after errors
 
 ---
@@ -49,9 +49,9 @@ Verify these before any car test (code review + bench):
 
 ### Phase 0 — Desk / CI (no car)
 
-1. Confirm command allowlist (Gate A).  
-2. Confirm enabled channel count and total **address slots** (sum of param lengths + switches).  
-3. Run Teensy offline validation (`validate_teensy_ssm.py --offline`) so maps match intent.  
+1. Confirm command allowlist (Gate A).
+2. Confirm enabled channel count and total **address slots** (sum of param lengths + switches).
+3. Run Teensy offline validation (`validate_teensy_ssm.py --offline`) so maps match intent.
 4. Optional: capture a CAN dump of one collector session on the Teensy and assert **only** `0x7E0`/`0x7E8` SSM-looking traffic from the Pi (no unexpected IDs from this stack).
 
 **Pass:** no write opcodes in code path; channel set documented; Teensy map OK.
@@ -62,13 +62,13 @@ Verify these before any car test (code review + bench):
 
 Simulate car load before touching the vehicle.
 
-1. Flash Teensy SSM sim; run collector + dashboard as in normal use.  
-2. Use the **same** `channels.json` planned for the car.  
-3. Soak **≥ 30–60 minutes** at full poll rate.  
-4. Watch for: sustained FC errors, poll thread death, rising warning rate, UI freezes.  
+1. Flash Teensy SSM sim; run collector + dashboard as in normal use.
+2. Use the **same** `channels.json` planned for the car.
+3. Soak **≥ 30–60 minutes** at full poll rate.
+4. Watch for: sustained FC errors, poll thread death, rising warning rate, UI freezes.
 5. Exercise parking switch / pots so values change (proves live path, not stuck cache).
 
-**Pass:** stable Hz, no hard poll death, recoverable warnings only (if any).  
+**Pass:** stable Hz, no hard poll death, recoverable warnings only (if any).
 **Fail:** repeated FC failures, bus errors, or collector crash under steady load → fix before car.
 
 ---
@@ -79,22 +79,22 @@ Lowest risk live ECU contact.
 
 **Setup**
 
-- Battery healthy; prefer battery tender if sitting long.  
-- PiCAN3 wired correctly; terminate/bus topology as designed.  
-- **Minimal** channel pack (e.g. 3–5 channels: coolant, RPM, speed, 1–2 extended).  
-- Start with **reduced poll rate** if easy to configure; otherwise keep channels tiny so ISO-TP stays light.  
+- Battery healthy; prefer battery tender if sitting long.
+- PiCAN3 wired correctly; terminate/bus topology as designed.
+- **Minimal** channel pack (e.g. 3–5 channels: coolant, RPM, speed, 1–2 extended).
+- Start with **reduced poll rate** if easy to configure; otherwise keep channels tiny so ISO-TP stays light.
 - Have a second person ready to pull the OBD plug.
 
 **Steps**
 
-1. Key ON, engine OFF. Confirm no collector running yet.  
-2. Start collector; confirm ECU ID matches expected (`SSM_ECU_ID` / init response).  
-3. Run **2 minutes** → check values look sane (not all NaN).  
-4. Run **15–30 minutes** soak.  
-5. Capture: poll rate achieved, timeout/error count, any dashboards CEL (should stay off for read-only).  
+1. Key ON, engine OFF. Confirm no collector running yet.
+2. Start collector; confirm ECU ID matches expected (`SSM_ECU_ID` / init response).
+3. Run **2 minutes** → check values look sane (not all NaN).
+4. Run **15–30 minutes** soak.
+5. Capture: poll rate achieved, timeout/error count, any dashboards CEL (should stay off for read-only).
 6. Stop collector; key OFF; wait; key ON again — car should behave normally.
 
-**Pass:** stable reads, no CEL, no odd module behavior, clean stop.  
+**Pass:** stable reads, no CEL, no odd module behavior, clean stop.
 **Abort immediately:** CEL, battery voltage collapse, CAN errors flooding, unresponsive dash/cluster, smoke/heat at adapter.
 
 ---
@@ -103,14 +103,14 @@ Lowest risk live ECU contact.
 
 Only after Phase 2 pass.
 
-1. Engine at idle, transmission Park/Neutral, parking brake set, outdoors/ventilated.  
-2. Same minimal channel pack; collector on.  
-3. Watch idle quality for **10+ minutes** (RPM smoothness, no stumble when logging starts/stops).  
-4. Toggle collector **off/on** several times while idling.  
-5. Optionally bump channel count one step; re-check idle and error rate.  
+1. Engine at idle, transmission Park/Neutral, parking brake set, outdoors/ventilated.
+2. Same minimal channel pack; collector on.
+3. Watch idle quality for **10+ minutes** (RPM smoothness, no stumble when logging starts/stops).
+4. Toggle collector **off/on** several times while idling.
+5. Optionally bump channel count one step; re-check idle and error rate.
 6. Optionally raise effective load (more channels) toward the production set; stay at idle.
 
-**Pass:** idle unchanged with logger on/off; errors rare; ECU ID stable.  
+**Pass:** idle unchanged with logger on/off; errors rare; ECU ID stable.
 **Abort:** stall, surge, CEL, limp, or sustained poll failures.
 
 ---
@@ -119,7 +119,7 @@ Only after Phase 2 pass.
 
 Goal: know the **safe envelope**, not the maximum possible. Run the **limit experiments** below (bench first, then car key-on/idle). Do not use “absolute max that still sometimes works” as the daily config.
 
-**Pass:** production config sustains target rate with **low** error rate (define a threshold, e.g. &lt; 0.1% failed polls over 10 minutes).  
+**Pass:** production config sustains target rate with **low** error rate (define a threshold, e.g. &lt; 0.1% failed polls over 10 minutes).
 **Fail:** need to drop channels or Hz to stay stable — document the ceiling; do not “push through” on the road.
 
 ---
@@ -183,12 +183,12 @@ Run each scenario **on Teensy first**. Repeat on the car only at **key-on / engi
 
 Parked-lot / private road only at first.
 
-1. Production channel set within **safe max limits** (below).  
-2. Drive gently; note any hesitation correlated with logging.  
-3. Prefer a passenger watching collector logs / error pill.  
+1. Production channel set within **safe max limits** (below).
+2. Drive gently; note any hesitation correlated with logging.
+3. Prefer a passenger watching collector logs / error pill.
 4. Stop test at first drivability anomaly.
 
-**Pass:** no correlation between logger and drivability issues over a short loop.  
+**Pass:** no correlation between logger and drivability issues over a short loop.
 **Do not** treat this as proof for track/WOT until more soak exists.
 
 ---
@@ -199,18 +199,18 @@ Run on **Teensy first**, then confirm on car **key-on**, then **idle**. Hold eac
 
 ### Experiment L1 — Max poll rate
 
-1. Fix a **small** channel set (e.g. 3–5 single-byte params).  
-2. Sweep target poll interval downward (examples: 10 Hz → 20 → 50 → 75 → 100 Hz) as configuration allows.  
-3. At each step log: target vs achieved period, error %, CAN stats if available.  
+1. Fix a **small** channel set (e.g. 3–5 single-byte params).
+2. Sweep target poll interval downward (examples: 10 Hz → 20 → 50 → 75 → 100 Hz) as configuration allows.
+3. At each step log: target vs achieved period, error %, CAN stats if available.
 4. Stop increasing when errors exceed threshold or idle quality changes (car).
 
 **Output:** `max_poll_hz_observed` (last unstable or last stable — label clearly) and `safe_poll_hz` (see assignment rules).
 
 ### Experiment L2 — Max items to poll
 
-1. Fix poll target at a moderate rate that passed L1 (e.g. 20 or 50 Hz).  
-2. Grow the enabled set by **address slots** (not just channel count): add params/switches until ISO-TP multi-frame grows. Suggested steps: 5 → 10 → 20 → 40 → 80 slots (stop earlier if failing).  
-3. At each step log: slot count, request/response frame count, achieved Hz, error %.  
+1. Fix poll target at a moderate rate that passed L1 (e.g. 20 or 50 Hz).
+2. Grow the enabled set by **address slots** (not just channel count): add params/switches until ISO-TP multi-frame grows. Suggested steps: 5 → 10 → 20 → 40 → 80 slots (stop earlier if failing).
+3. At each step log: slot count, request/response frame count, achieved Hz, error %.
 4. Note cliff where FC failures or Hz collapse.
 
 **Output:** `max_address_slots_observed` and `safe_address_slots`.
@@ -243,11 +243,11 @@ Until L3 is done, treat the **Recommended first-car configuration** as the inter
 
 Stop collector and disconnect OBD if any of these occur:
 
-- Check engine light / flashing CEL  
-- Stall, severe idle stumble, or throttle anomaly  
-- Cluster / ABS / other warning lights appearing with logger start  
-- Sustained CAN bus-off or nonstop FC / timeout spam  
-- Smell of electronics, hot connector, or battery voltage diving  
+- Check engine light / flashing CEL
+- Stall, severe idle stumble, or throttle anomaly
+- Cluster / ABS / other warning lights appearing with logger start
+- Sustained CAN bus-off or nonstop FC / timeout spam
+- Smell of electronics, hot connector, or battery voltage diving
 - Any evidence of **write** or unexpected CAN IDs from the Pi
 
 ---
@@ -256,11 +256,11 @@ Stop collector and disconnect OBD if any of these occur:
 
 Until Phase 4 + **L3 safe max** are assigned:
 
-- **Few channels** (prefer single-byte params; avoid huge extended batches)  
-- Keep **S142 / switches** only if needed (they still cost one address slot each)  
-- Do **not** enable the full `channels.generated.json` catalog  
-- Prefer Pi **on-car** (`CAN_MODE=native`) over long socketcand tunnels for first tests  
-- One collector instance only (no double-polling from laptop + Pi)  
+- **Few channels** (prefer single-byte params; avoid huge extended batches)
+- Keep **S142 / switches** only if needed (they still cost one address slot each)
+- Do **not** enable the full `channels.generated.json` catalog
+- Prefer Pi **on-car** (`CAN_MODE=native`) over long socketcand tunnels for first tests
+- One collector instance only (no double-polling from laptop + Pi)
 - After L3: never exceed `safe_poll_hz` / `safe_address_slots` in production `channels.json` / collector config
 
 ---
@@ -269,18 +269,18 @@ Until Phase 4 + **L3 safe max** are assigned:
 
 For each car phase, note:
 
-1. Date, ROM/ECU ID, channel list, poll interval  
-2. Duration and pass/fail  
-3. Error counts / log excerpts  
-4. Any vehicle symptoms  
-5. Decision: proceed / hold / reduce load  
+1. Date, ROM/ECU ID, channel list, poll interval
+2. Duration and pass/fail
+3. Error counts / log excerpts
+4. Any vehicle symptoms
+5. Decision: proceed / hold / reduce load
 
 ---
 
 ## Residual risk (be honest)
 
-- Read-only SSM is widely used (RomRaider, etc.), but **rate and batch size** are the real stress knobs.  
-- A read cannot “flash” the ECU via this client, but a **buggy cable, wrong tool, or future code change** could. Re-run Gate A after any SSM client change.  
+- Read-only SSM is widely used (RomRaider, etc.), but **rate and batch size** are the real stress knobs.
+- A read cannot “flash” the ECU via this client, but a **buggy cable, wrong tool, or future code change** could. Re-run Gate A after any SSM client change.
 - Some ECUs are fussier than others; passing on one STI ROM does not automatically clear every car.
 
 ---
@@ -289,11 +289,11 @@ For each car phase, note:
 
 **Go** when:
 
-- Gate A current  
-- Phase 1 soak clean  
-- Phase 2 + 3 pass  
-- Phase 4 / L1–L3 complete with written **safe max** limits  
-- Production config **inside** those limits  
-- Phase 5 resilience scenarios (R1–R4) passed on car key-on; R5 bench suite passed  
+- Gate A current
+- Phase 1 soak clean
+- Phase 2 + 3 pass
+- Phase 4 / L1–L3 complete with written **safe max** limits
+- Production config **inside** those limits
+- Phase 5 resilience scenarios (R1–R4) passed on car key-on; R5 bench suite passed
 
 **No-go** if production set only works by ignoring frequent timeouts, by stressing idle quality, or by running at the overload cliff without margin.

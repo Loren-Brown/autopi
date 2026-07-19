@@ -11,12 +11,12 @@ SETUP_SCRIPTS=(
     "raspberryPiSetup/install_CAN_utils.sh"      # Install can-utils
     "raspberryPiSetup/add_pican3_overlays.sh"    # PiCAN3 SPI/CAN overlays  — reboots if changed
     "raspberryPiSetup/enable_can0_at_startup.sh" # Configure can0 at boot
-    
+
     # Real Time clock setup
     "raspberryPiSetup/install_rtc_tools.sh"      # Install i2c-tools
     "raspberryPiSetup/add_rtc_overlays.sh"       # RTC I2C overlays          — reboots if changed
     "raspberryPiSetup/disable_fake_hwclock.sh"   # Remove fake-hwclock
-    
+
     "raspberryPiSetup/install_uv.sh"             # Install uv package manager
     "raspberryPiSetup/install_socketcand.sh"     # Build & install socketcand
 

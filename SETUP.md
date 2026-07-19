@@ -9,6 +9,18 @@ One-time Pi setup, deploy, and how to run the app. For project background (SSM, 
 - Passwordless `sudo` for the Pi user
 - Laptop `.env` with `PI_HOSTNAME`, `PI_HOST`, `PI_USER` (and optional `AP_SSID` / `AP_HOSTNAME`)
 
+## Dev machine: lint hooks (optional but recommended)
+
+On a laptop checkout (not the Pi), install commit hooks so Ruff / secret scans run before each commit. CI runs the same checks on GitHub.
+
+```bash
+uv sync --dev
+uv run pre-commit install
+uv run pre-commit run --all-files   # once, to catch existing issues
+```
+
+Hooks refuse `.env` and `docs/romraider/*.xml` in commits. See `.pre-commit-config.yaml` and `.github/workflows/ci.yml`.
+
 ## Environment configuration
 
 1. Copy the example environment file to `.env`:

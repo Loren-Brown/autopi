@@ -15,4 +15,3 @@ src/ssm-collector/configs/channels.generated.json
 
 # Local Teensy bench validation helper
 src/ssm-collector/test/validate_teensy_ssm.py
-

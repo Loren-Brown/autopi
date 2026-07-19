@@ -35,7 +35,7 @@ import os
 import threading
 import time
 from collections import deque
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
 from typing import Any
 
@@ -314,10 +314,8 @@ async def lifespan(_app: FastAPI):
     yield
     store.running = False
     broadcast_task.cancel()
-    try:
+    with suppress(asyncio.CancelledError):
         await broadcast_task
-    except asyncio.CancelledError:
-        pass
     if _poll_thread is not None:
         _poll_thread.join(timeout=2.0)
 

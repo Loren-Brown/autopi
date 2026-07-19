@@ -144,14 +144,12 @@ def _client_is_trusted(request: Request, ap: dict[str, str]) -> bool:
         return True
     admin_subnet = ap.get("ADMIN_SUBNET", "10.3.142.0/24")
     # USB gadget: historical shared pool + common Mac Internet Sharing pools
-    if (
+    return (
         _ip_in_subnet(host, admin_subnet)
         or _ip_in_subnet(host, "10.12.194.0/28")
         or _ip_in_subnet(host, "192.168.2.0/24")
         or _ip_in_subnet(host, "192.168.137.0/24")
-    ):
-        return True
-    return False
+    )
 
 
 def _wifi_qr_payload(ssid: str, psk: str) -> str:
