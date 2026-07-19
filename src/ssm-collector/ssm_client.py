@@ -42,15 +42,17 @@ FC_TIMEOUT = 0.5  # seconds to wait for flow control
 @dataclass
 class SsmParam:
     """
-    One SSM memory parameter with optional engineering-unit conversion.
+    One SSM memory parameter or RomRaider switch with optional conversion.
 
     Attributes:
-        id: Stable parameter id from the config map (e.g. ``\"P2\"``, ``\"E31\"``).
+        id: Stable id from the config map (e.g. ``\"P2\"``, ``\"E31\"``, ``\"S142\"``).
         name: Human-readable name.
         address: ECU memory start address (24-bit).
         length: Number of bytes to read.
         conversions: RomRaider-style conversion dicts; the first entry is used
-            by :meth:`decode` and :attr:`units`.
+            by :meth:`decode` and :attr:`units`. Unused for switches.
+        bit: When set (0–7), this is a RomRaider switch: decode extracts that
+            bit from the first raw byte as ``0.0`` / ``1.0``.
     """
 
     id: str
@@ -58,14 +60,16 @@ class SsmParam:
     address: int
     length: int
     conversions: list[dict]
+    bit: int | None = None
 
     def decode(self, raw: bytes) -> float:
         """
         Convert raw ECU bytes to an engineering value.
 
-        Uses ``storagetype`` (``uint8`` / ``uint16`` / ``int16`` / ``int8`` /
-        ``float``) and evaluates the conversion ``expr`` with ``x`` bound to
-        the unpacked number. Builtins are not available inside ``expr``.
+        For switches (``bit`` set), returns ``0.0`` or ``1.0`` from that bit.
+        Otherwise uses ``storagetype`` (``uint8`` / ``uint16`` / ``int16`` /
+        ``int8`` / ``float``) and evaluates the conversion ``expr`` with ``x``
+        bound to the unpacked number. Builtins are not available inside ``expr``.
 
         Args:
             raw: Bytes read for this parameter (length should match
@@ -75,6 +79,10 @@ class SsmParam:
             Decoded float, or the unpacked numeric value if ``expr`` fails.
             With no conversions, returns the big-endian integer of ``raw``.
         """
+        if self.bit is not None:
+            byte = raw[0] if raw else 0
+            return float((byte >> self.bit) & 1)
+
         if not self.conversions:
             return float(int.from_bytes(raw[: self.length], "big"))
 
@@ -99,11 +107,15 @@ class SsmParam:
 
     @property
     def units(self) -> str:
-        """Engineering units string from the first conversion, or ``\"\"``."""
+        """Engineering units string; ``\"bool\"`` for switches."""
+        if self.bit is not None:
+            return "bool"
         return self.conversions[0].get("units", "") if self.conversions else ""
 
     def _default_gauge_span(self) -> tuple[float, float]:
         """Fallback gauge range when the XML omits gauge_min / gauge_max."""
+        if self.bit is not None or self.units == "bool":
+            return 0.0, 1.0
         if self.units == "multiplier":
             return 0.0, 1.0
         return 0.0, 100.0
@@ -112,7 +124,7 @@ class SsmParam:
     def gauge_min(self) -> float:
         """Gauge lower bound from the first conversion, or a units-based default."""
         default_min, _ = self._default_gauge_span()
-        if not self.conversions:
+        if self.bit is not None or not self.conversions:
             return default_min
         raw = self.conversions[0].get("gauge_min")
         try:
@@ -124,7 +136,7 @@ class SsmParam:
     def gauge_max(self) -> float:
         """Gauge upper bound from the first conversion, or a units-based default."""
         _, default_max = self._default_gauge_span()
-        if not self.conversions:
+        if self.bit is not None or not self.conversions:
             return default_max
         raw = self.conversions[0].get("gauge_max")
         try:
@@ -167,9 +179,7 @@ class SSMClient:
         self._send_isotp(bytes([SSM_CMD_INIT, 0x40]))
         resp = self._recv_isotp()
         if not resp or resp[0] != SSM_RESP_INIT or len(resp) < 6:
-            raise RuntimeError(
-                f"Bad SSM init response: {resp.hex() if resp else 'timeout'}"
-            )
+            raise RuntimeError(f"Bad SSM init response: {resp.hex() if resp else 'timeout'}")
         self._ecu_id = resp[1:6].hex().upper()
         return self._ecu_id
 
@@ -233,9 +243,7 @@ class SSMClient:
         else:
             # First frame
             total = len(payload)
-            self._send_can(
-                bytes([0x10 | ((total >> 8) & 0x0F), total & 0xFF]) + payload[:6]
-            )
+            self._send_can(bytes([0x10 | ((total >> 8) & 0x0F), total & 0xFF]) + payload[:6])
             # Wait for flow control
             fc = self._recv_single(timeout=FC_TIMEOUT)
             if fc is None or (fc[0] & 0xF0) != 0x30:

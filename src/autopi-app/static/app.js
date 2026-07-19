@@ -20,10 +20,8 @@
   let buzzOsc = null;
   let buzzGain = null;
 
-  /** Dash: guest QR panel ready; shown only after speed stays 0 for 10s. */
+  /** Dash: guest QR panel ready; shown when parking switch (S142) is ON. */
   let apShareReady = false;
-  let speedZeroSinceMs = null;
-  const QR_STATIONARY_MS = 10000;
 
   const state = {
     meta: {},
@@ -70,11 +68,18 @@
     }
   }
 
-  function fmt(val, units) {
+  function fmt(val, units, kind) {
     if (val == null || Number.isNaN(val)) return "—";
+    if (kind === "switch" || units === "bool") {
+      return Number(val) >= 0.5 ? "ON" : "OFF";
+    }
     const digits =
       FORMAT[units] !== undefined ? FORMAT[units] : FORMAT.default;
     return Number(val).toFixed(digits);
+  }
+
+  function isSwitchMeta(m) {
+    return m && (m.kind === "switch" || m.units === "bool");
   }
 
   function sortedMetas(metaById) {
@@ -92,42 +97,21 @@
     elApShare.hidden = !show;
   }
 
-  function setMotionStatus(status) {
+  function setParkedState(parked) {
     if (!elMotion) return;
-    elMotion.dataset.state = status;
-    elMotion.textContent =
-      status === "moving"
-        ? "moving"
-        : status === "stopped"
-          ? "stopped"
-          : status === "parked"
-            ? "parked"
-            : "—";
+    elMotion.hidden = false;
+    elMotion.textContent = "parked";
+    elMotion.dataset.state = parked ? "parked" : "disabled";
+    elMotion.setAttribute("aria-label", parked ? "Parked" : "Not parked");
   }
 
   function updateMotionAndQr() {
     if (!IS_DASH) return;
-    const meta = findMetaByKey("p9");
-    const val = meta ? state.values[meta.id] : NaN;
-    const live = val === val;
-
-    if (!live) {
-      setMotionStatus("unknown");
-      return;
-    }
-
-    if (val > 0) {
-      speedZeroSinceMs = null;
-      setMotionStatus("moving");
-      setApShareVisible(false);
-      return;
-    }
-
-    // Stationary (speed == 0)
-    const now = Date.now();
-    if (speedZeroSinceMs == null) speedZeroSinceMs = now;
-    const parked = now - speedZeroSinceMs >= QR_STATIONARY_MS;
-    setMotionStatus(parked ? "parked" : "stopped");
+    // RomRaider S142 Parking Position Switch → "parked" badge + guest Wi‑Fi QR
+    const parkMeta = findMetaByKey("s142");
+    const park = parkMeta ? state.values[parkMeta.id] : NaN;
+    const parked = park === park && park >= 0.5;
+    setParkedState(parked);
     setApShareVisible(parked);
   }
 
@@ -228,6 +212,19 @@
     if (!elGauges || !elCharts || elGauges.childElementCount > 0) return;
 
     for (const m of metas) {
+      if (isSwitchMeta(m)) {
+        const card = document.createElement("article");
+        card.className = "gauge-card switch-card";
+        card.innerHTML = `
+          <h2>${m.label}</h2>
+          <div class="gauge-value" data-value="${m.id}">—</div>
+          <div class="gauge-units">switch</div>
+        `;
+        elGauges.appendChild(card);
+        state.history[m.id] = state.history[m.id] || [];
+        continue;
+      }
+
       const card = document.createElement("article");
       card.className = "gauge-card";
       card.innerHTML = `
@@ -557,7 +554,7 @@
       const valueNode =
         (card && card.querySelector(`[data-value="${pid}"]`)) ||
         document.querySelector(`[data-value="${pid}"]`);
-      if (valueNode) valueNode.textContent = fmt(val, meta.units);
+      if (valueNode) valueNode.textContent = fmt(val, meta.units, meta.kind);
 
       const { min, max } = rangeMinMax(pid, nowSec);
       const maxWrap = card && card.querySelector(".readout-max");
@@ -568,8 +565,8 @@
       const minNode =
         (minWrap && minWrap.querySelector(`[data-min="${pid}"]`)) ||
         document.querySelector(`[data-min="${pid}"]`);
-      if (maxNode) maxNode.textContent = fmt(max, meta.units);
-      if (minNode) minNode.textContent = fmt(min, meta.units);
+      if (maxNode) maxNode.textContent = fmt(max, meta.units, meta.kind);
+      if (minNode) minNode.textContent = fmt(min, meta.units, meta.kind);
 
       const thr = THRESHOLDS[meta.key] || {};
       const liveOk = val === val;
@@ -599,7 +596,7 @@
     for (const [pid, val] of Object.entries(state.values)) {
       const node = document.querySelector(`[data-value="${pid}"]`);
       const meta = state.meta[pid];
-      if (node && meta) node.textContent = fmt(val, meta.units);
+      if (node && meta) node.textContent = fmt(val, meta.units, meta.kind);
     }
     for (const g of Object.values(state.gauges)) drawGauge(g);
     for (const c of Object.values(state.charts)) drawChart(c);
@@ -745,7 +742,7 @@
       document.getElementById("urlQr").src =
         info.url_qr_data_uri || "/api/ap-url-qr.svg";
       apShareReady = true;
-      // Stay hidden until vehicle has been stationary for QR_STATIONARY_MS.
+      // Stay hidden until S142 parking switch is ON.
       elApShare.hidden = true;
       updateMotionAndQr();
     } catch (_) {

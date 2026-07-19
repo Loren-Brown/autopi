@@ -59,13 +59,14 @@ class ParamMeta:
     UI-facing metadata for one dashboard channel.
 
     Attributes:
-        id: SSM param id (e.g. ``\"P2\"``).
-        key: Short UI key (RomRaider id lowercased, e.g. ``\"p2\"``).
-        label: Gauge / chart title (RomRaider param name).
+        id: SSM param / switch id (e.g. ``\"P2\"``, ``\"S142\"``).
+        key: Short UI key (RomRaider id lowercased, e.g. ``\"p2\"``, ``\"s142\"``).
+        label: Gauge / chart title (RomRaider name).
         name: Full name from the address map.
-        units: Engineering units string.
+        units: Engineering units string (``\"bool\"`` for switches).
         min: Gauge lower bound.
         max: Gauge upper bound.
+        kind: ``\"param\"`` or ``\"switch\"``.
     """
 
     id: str
@@ -75,6 +76,7 @@ class ParamMeta:
     units: str
     min: float
     max: float
+    kind: str = "param"
 
 
 class TelemetryStore:
@@ -120,6 +122,7 @@ class TelemetryStore:
                     units=p.units,
                     min=p.gauge_min,
                     max=p.gauge_max,
+                    kind="switch" if p.bit is not None else "param",
                 )
                 self.values[p.id] = float("nan")
                 self.history[p.id] = deque(maxlen=HISTORY_MAXLEN)
@@ -164,6 +167,7 @@ class TelemetryStore:
                         "units": m.units,
                         "min": m.min,
                         "max": m.max,
+                        "kind": m.kind,
                     }
                     for pid, m in self.meta.items()
                 },

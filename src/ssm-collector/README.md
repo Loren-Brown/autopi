@@ -39,7 +39,25 @@ flowchart LR
 
 **Which params to poll** come from committed [`configs/channels.json`](configs/channels.json): each entry has `id`, `enabled`, and optional `info` (units/key/label/min/max for humans only). The collector reads **only** `id` + `enabled`. **Addresses, units, labels, and gauge bounds** come from the RomRaider logger XML (first conversion; selected by the 5-byte ECU ID from SSM init, overridable with `SSM_ECU_ID`). On a laptop, `ROMRAIDER_XML` usually points under `docs/romraider/`. `./deploy.sh` copies that file to `configs/<same-filename>.xml` on the Pi only; at runtime the Pi loads the single `*.xml` in `configs/`.
 
-UI colors/thresholds live separately in `../autopi-app/configs/` — channel `key` values are RomRaider ids lowercased (`p2`, `e31`, …).
+UI colors/thresholds live separately in `../autopi-app/configs/` — channel `key` values are RomRaider ids lowercased (`p2`, `e31`, `s142`, …).
+
+**Switches** (RomRaider `<switch>`, e.g. `S142` Parking Position Switch) are valid channel ids. They share the same A8 batch-read path as parameters; decode extracts one bit from the byte (`0` / `1`, units `bool`). Enable in `channels.json` like any other id:
+
+```json
+{
+  "id": "S142",
+  "enabled": true,
+  "info": {
+    "units": "bool",
+    "key": "s142",
+    "label": "Parking Position Switch",
+    "min": 0.0,
+    "max": 1.0
+  }
+}
+```
+
+WebSocket meta includes `"kind": "switch"` for these channels. On the Teensy bench sim, SW2 toggles S142 (`0x0000D6` bit 7).
 
 ## Structure
 
@@ -77,14 +95,14 @@ Low-level SSM over CAN:
 - Request `0x7E0` → response `0x7E8`
 - ISO-TP framing
 - Commands: init (`0xBF`), batch read (`0xA8`)
-- `SsmParam` — address, length, conversion expr → engineering units
+- `SsmParam` — address, length, conversion expr → engineering units; optional `bit` for switches → 0/1
 
 ### `raider_reader.py`
 
 Reads RomRaider `logger_*.xml` directly:
 
 - Path from `ROMRAIDER_XML` (repo-relative or absolute)
-- Standard `<parameter>` + per-ECU `<ecuparam>` under protocol `SSM`
+- Standard `<parameter>` + `<switch>` + per-ECU `<ecuparam>` under protocol `SSM`
 - CLI: `uv run src/ssm-collector/raider_reader.py --summary`
 
 ### Channel catalog setup (`ssm_collector_setup.sh`)

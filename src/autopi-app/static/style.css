@@ -431,26 +431,15 @@ body[data-view="dashboard"] .dash-motion {
   border-radius: 999px;
 }
 
-body[data-view="dashboard"] .dash-motion[data-state="moving"] {
-  background: #0a6b2c;
-  border-color: #fff;
-}
-
-body[data-view="dashboard"] .dash-motion[data-state="stopped"] {
-  color: #000;
-  background: var(--sti-gold);
-  border-color: #fff;
-}
-
 body[data-view="dashboard"] .dash-motion[data-state="parked"] {
   background: #1a4a8a;
   border-color: #fff;
 }
 
-body[data-view="dashboard"] .dash-motion[data-state="unknown"] {
-  color: #fff;
-  background: #333;
-  border-color: #666;
+body[data-view="dashboard"] .dash-motion[data-state="disabled"] {
+  color: #888;
+  background: #222;
+  border-color: #555;
 }
 
 body[data-view="dashboard"] .pill {

@@ -5,12 +5,14 @@
     "C": 1,
     "F": 0,
     "degrees": 1,
+    "bool": 0,
     "default": 2
   },
   "channels": [
     { "key": "p2", "color": "#e06c75" },
     { "key": "p11", "color": "#6cb6ff" },
     { "key": "e31", "color": "#e6a23c" },
-    { "key": "e41", "color": "#6fbf73" }
+    { "key": "e41", "color": "#6fbf73" },
+    { "key": "s142", "color": "#c678dd" }
   ]
 }

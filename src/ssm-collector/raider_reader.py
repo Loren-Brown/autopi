@@ -93,10 +93,7 @@ def resolve_romraider_xml() -> Path:
         return found
 
     if raw:
-        raise FileNotFoundError(
-            f"ROMRAIDER_XML not found: {raw} "
-            f"(and no *.xml in {CONFIGS_DIR})"
-        )
+        raise FileNotFoundError(f"ROMRAIDER_XML not found: {raw} (and no *.xml in {CONFIGS_DIR})")
     raise FileNotFoundError(
         f"ROMRAIDER_XML is not set and no *.xml found in {CONFIGS_DIR} "
         "(see .env.example; on the Pi run ./deploy.sh to copy the logger XML)"
@@ -147,13 +144,14 @@ def parse_conversions(el: ET.Element) -> list[dict[str, Any]]:
 
 def parse_xml(xml_path: Path) -> dict[str, list[dict[str, Any]]]:
     """
-    Parse a RomRaider logger XML into standard + per-ECU parameter lists.
+    Parse a RomRaider logger XML into standard params/switches + per-ECU lists.
 
     Args:
         xml_path: Path to ``logger_*.xml``.
 
     Returns:
-        Mapping with ``\"__standard__\"`` plus one list per ECU id string.
+        Mapping with ``\"__standard__\"`` (parameters + switches) plus one list
+        per ECU id string for extended params.
     """
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -217,6 +215,37 @@ def parse_xml(xml_path: Path) -> dict[str, list[dict[str, Any]]]:
                 if ecu_id:
                     ecu_params[ecu_id].append(entry)
 
+    # RomRaider switches: empty elements with byte + bit (no conversions).
+    # Do not filter by target — e.g. S142 Parking is target="2".
+    for sw in search_root.findall(".//switch"):
+        pid = sw.get("id")
+        if not pid or pid in seen_ids:
+            continue
+        byte_str = (sw.get("byte") or "").strip()
+        bit_str = (sw.get("bit") or "").strip()
+        if not byte_str or not bit_str:
+            continue
+        try:
+            addr_int = int(byte_str, 16)
+            bit = int(bit_str)
+        except ValueError:
+            continue
+        if addr_int > 0x00FFFF or not (0 <= bit <= 7):
+            continue
+        seen_ids.add(pid)
+        ecu_params["__standard__"].append(
+            {
+                "id": pid,
+                "name": sw.get("name") or pid,
+                "desc": sw.get("desc", ""),
+                "address": f"0x{addr_int:06X}",
+                "length": 1,
+                "bit": bit,
+                "type": "switch",
+                "conversions": [],
+            }
+        )
+
     return ecu_params
 
 
@@ -275,14 +304,14 @@ def param_index(
     xml_path: Path | None = None,
 ) -> dict[str, dict[str, Any]]:
     """
-    Build ``param_id → raw param dict`` for one ECU (standard + extended).
+    Build ``param_id → raw param dict`` for one ECU (standard + extended + switches).
 
     Args:
         ecu_id: Five-byte ECU id hex string.
         xml_path: Optional override for the logger XML.
 
     Returns:
-        Merged parameter dict keyed by RomRaider id (e.g. ``\"P2\"``, ``\"E31\"``).
+        Merged dict keyed by RomRaider id (e.g. ``\"P2\"``, ``\"E31\"``, ``\"S142\"``).
     """
     data = load_logger_map(xml_path)
     std = data.get("__standard__", [])
@@ -296,14 +325,14 @@ def load_params_from_xml(
     xml_path: Path | None = None,
 ) -> list[SsmParam]:
     """
-    Resolve parameter ids against a RomRaider XML file.
+    Resolve parameter / switch ids against a RomRaider XML file.
 
     Uses the first conversion listed for each parameter (unit-system XMLs
-    control which conversion is first).
+    control which conversion is first). Switches use ``bit`` extraction instead.
 
     Args:
         ecu_id: Hex ECU ID used to select extended addresses.
-        param_ids: RomRaider parameter ids (e.g. ``\"P2\"``, ``\"E31\"``).
+        param_ids: RomRaider ids (e.g. ``\"P2\"``, ``\"E31\"``, ``\"S142\"``).
         xml_path: Optional XML path; defaults to :func:`resolve_romraider_xml`.
 
     Returns:
@@ -318,6 +347,7 @@ def load_params_from_xml(
             continue
         convs = raw.get("conversions", [])
         conv = convs[0] if convs else {}
+        bit = raw.get("bit")
         params.append(
             SsmParam(
                 id=pid,
@@ -325,14 +355,17 @@ def load_params_from_xml(
                 address=int(raw["address"], 16),
                 length=raw["length"],
                 conversions=[conv] if conv else [],
+                bit=int(bit) if bit is not None else None,
             )
         )
     return params
 
 
 def print_summary(out: dict[str, Any]) -> None:
-    """Print ECU / parameter counts for a loaded logger map."""
-    standard_count = len(out.get("__standard__", []))
+    """Print ECU / parameter / switch counts for a loaded logger map."""
+    standard = out.get("__standard__", [])
+    switch_count = sum(1 for p in standard if p.get("type") == "switch")
+    param_count = len(standard) - switch_count
     ecu_entries = sorted(
         out["ecus"].items(),
         key=lambda x: x[1]["extended_count"],
@@ -341,9 +374,12 @@ def print_summary(out: dict[str, Any]) -> None:
     print(f"\n{'ECU ID':<20} {'Extended':>10} {'Standard':>10} {'Total':>8}")
     print("─" * 52)
     for ecu_id, data in ecu_entries:
-        total = data["extended_count"] + standard_count
-        print(f"{ecu_id:<20} {data['extended_count']:>10} {standard_count:>10} {total:>8}")
-    print(f"\n{len(ecu_entries)} ECU IDs | {standard_count} shared standard params")
+        total = data["extended_count"] + len(standard)
+        print(f"{ecu_id:<20} {data['extended_count']:>10} {len(standard):>10} {total:>8}")
+    print(
+        f"\n{len(ecu_entries)} ECU IDs | {param_count} standard params | "
+        f"{switch_count} switches (shared)"
+    )
 
 
 def _parse_args() -> argparse.Namespace:

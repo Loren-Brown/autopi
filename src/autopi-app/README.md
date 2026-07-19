@@ -20,7 +20,7 @@ Any client may open either view. Nav is for development and secondary devices; t
 - **No mouse, keyboard, or touch** in normal use — glanceable only.
 - Prioritize **large type**, **easy-to-read fonts**, and **high-contrast** colors so values are readable at a glance and in varying cabin light.
 - Layout should fit the screen without relying on scroll or fine interaction.
-- QR / Wi‑Fi share UI is for setup and the dev machine, not for the driver while driving. On Dash the header shows **moving** / **stopped** / **parked**; the QR panel appears only in the parked state (speed 0 for 10 seconds) and hides as soon as speed is above 0.
+- QR / Wi‑Fi share UI is for setup and the dev machine, not for the driver while driving. On Dash, the **parked** badge always shows; S142 ON lights it blue and opens the guest Wi‑Fi QR panel, S142 OFF keeps the badge muted (disabled).
 
 **Detailed (`/detailed`) — mobile secondary**
 

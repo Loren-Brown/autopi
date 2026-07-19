@@ -2,9 +2,9 @@
 """
 Generate a channels.json template from the RomRaider logger XML.
 
-Every standard + ECU-specific parameter is included with ``\"enabled\": false``.
-Human-readable fields live under ``info`` (ignored at runtime). The collector
-only reads ``id`` and ``enabled``.
+Every standard + ECU-specific parameter and RomRaider switch is included with
+``\"enabled\": false``. Human-readable fields live under ``info`` (ignored at
+runtime). The collector only reads ``id`` and ``enabled``.
 
 Usage
 -----
@@ -45,28 +45,38 @@ def _slug_key(param_id: str, name: str) -> str:
 
 
 def _channel_from_param(param: dict[str, Any]) -> dict[str, Any]:
-    """Map one RomRaider param dict to a channels.json entry (disabled)."""
+    """Map one RomRaider param or switch dict to a channels.json entry (disabled)."""
+    pid = str(param.get("id") or "")
+    name = str(param.get("name") or pid)
+
+    if param.get("type") == "switch" or param.get("bit") is not None:
+        return {
+            "id": pid,
+            "enabled": False,
+            "info": {
+                "units": "bool",
+                "key": _slug_key(pid, name),
+                "label": name,
+                "min": 0.0,
+                "max": 1.0,
+            },
+        }
+
     convs = param.get("conversions") or []
     conv = convs[0] if convs else {}
     units = str(conv.get("units") or "")
     default_min, default_max = (0.0, 1.0) if units == "multiplier" else (0.0, 100.0)
     try:
-        gmin = (
-            float(conv["gauge_min"]) if conv.get("gauge_min") is not None else default_min
-        )
+        gmin = float(conv["gauge_min"]) if conv.get("gauge_min") is not None else default_min
     except (TypeError, ValueError):
         gmin = default_min
     try:
-        gmax = (
-            float(conv["gauge_max"]) if conv.get("gauge_max") is not None else default_max
-        )
+        gmax = float(conv["gauge_max"]) if conv.get("gauge_max") is not None else default_max
     except (TypeError, ValueError):
         gmax = default_max
     if gmax == gmin:
         gmax = gmin + 1.0
 
-    pid = str(param.get("id") or "")
-    name = str(param.get("name") or pid)
     return {
         "id": pid,
         "enabled": False,
@@ -82,7 +92,7 @@ def _channel_from_param(param: dict[str, Any]) -> dict[str, Any]:
 
 def build_channels(ecu_id: str, xml_path: Path | None = None) -> list[dict[str, Any]]:
     """
-    Build disabled channel entries for standard + ECU extended params.
+    Build disabled channel entries for standard params, switches, and ECU extended.
 
     Args:
         ecu_id: Hex ECU ID for extended-parameter selection.
